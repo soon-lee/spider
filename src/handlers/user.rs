@@ -1,3 +1,10 @@
-pub(crate) async fn get_user_by_id() {
-    println!("get_user_by_id");
+pub(crate) async fn user_pool_info() {
+}
+pub(crate) async fn update_user_pool() {
+}
+pub(crate) async fn user_list(){
+
+}
+pub(crate) async fn user_info(){
+
 }

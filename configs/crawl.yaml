@@ -1,0 +1,26 @@
+crawl:
+  origins:
+    - "https://www.yymh1220.com"
+    - "https://www.yymh1221.com"
+    - "https://www.yymh1222.com"
+    - "https://www.yymh1223.com"
+    - "https://www.yymh1224.com"
+    - "https://www.yymh1225.com"
+    - "https://www.yymh1226.com"
+    - "https://www.yymh1227.com"
+    - "https://www.yymh1228.com"
+    - "https://www.yymh1229.com"
+    - "https://www.yymh1230.com"
+    - "https://www.yymh1231.com"
+    - "https://www.yymh1232.com"
+    - "https://www.yymh1233.com"
+    - "https://www.yymh1234.com"
+    - "https://www.yymh1235.com"
+  scripts: []
+  options:
+    template_str: '[''"]([4xy]{32}?)[''"]'
+    default_str: '"-0-([^''"]+?)"'
+    app_id: 'appId\s*=\s*[''"]([^_]*?)[''"]'
+    aes_key: 'enc.Utf8.parse\([''"](.*?)[''"]\)'
+    dev_type: '\{\s*[''"]?devType[''"]?\s*:\s*[''"]?(.*?)[''"]?\}'
+  configs: {}
