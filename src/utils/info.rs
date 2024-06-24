@@ -141,10 +141,11 @@ impl Config {
 pub(crate) async fn register_user(config:&CrawlConfig) {
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("https://wwapi1.xsjk99.com{}",config.auth_path(&"/api/user/regUser".to_string())))
+        .post(format!("https://wwapi1.xsjk99.com{}",config.auth_path(&"/api/h5/getChapterContent".to_string())))
         .header("Appid",config.configs.get("app_id").unwrap())
         .header("Content-Type","application/json")
-        .body(format!("{{\"data\":\"{}\"}}",config.encrypt(&format!("{{\"devType\":\"3\",\"timestamp\":\"{}\"}}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()/1000))))
+        .body("{\"data\":\"1FE8heap7dhnyi2J0RV9aGfeVWwp0RC/AlfaJrI0pSzrS4si0qTjZSGbhJTyHoxHrkrPp8eCkI2WdK4Vysdn2OW2KBYDc1OaKeLoMw8+Kuo=\"}")
+        // .body(format!("{{\"data\":\"{}\"}}",config.encrypt(&format!("{{\"devType\":\"3\",\"timestamp\":\"{}\"}}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()/1000))))
         .send()
         .await
         .unwrap();

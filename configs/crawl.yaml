@@ -24,3 +24,72 @@ crawl:
     aes_key: 'enc.Utf8.parse\([''"](.*?)[''"]\)'
     dev_type: '\{\s*[''"]?devType[''"]?\s*:\s*[''"]?(.*?)[''"]?\}'
   configs: {}
+actions:
+  - origin: "https://wwapi1.xsjk99.com"
+    headers:
+      "Appid": ""
+    group:
+      - name: "注册用户"
+        method: "POST"
+        path: "/api/user/regUser"
+        data:
+          "devType": ""
+          "timeStamp": ""
+      - name: "用户信息"
+        method: "POST"
+        path: "/api/user/getUserInfo"
+        data:
+          "userId": ""
+          "isUpdate": ""
+          "timeStamp": ""
+      - name: "任务列表"
+        method: "POST"
+        path: "/api/user/getTaskList"
+        data:
+          "userId": ""
+          "timeStamp": ""
+      - name: "任务奖励"
+        method: "POST"
+        path: "/api/user/getTaskReward"
+        data:
+          "userId": ""
+          "taskId": ""
+          "timeStamp": ""
+      - name: "漫画分类"
+        method: "POST"
+        path: "/api/h5/getCategory"
+        data:
+          "c": "yml"
+          "timeStamp": ""
+      - name: "分类查询"
+        method: "POST"
+        path: "/api/h5/getComicByCategoryId"
+        data:
+          "page": ""
+          "limit": ""
+          "categoryId": ""
+          "timeStamp": ""
+      - name: "漫画信息"
+        method: "POST"
+        path: "/api/h5/getComicInfo"
+        data:
+          "comicId": ""
+          "limit": ""
+          "timeStamp": ""
+      - name: "章节内容"
+        method: "POST"
+        path: "/api/h5/getChapterContent"
+        data:
+          "chapterId": ""
+          "userId": ""
+          "timeStamp": ""
+      - name: "漫画搜索"
+        method: "POST"
+        path: "/api/user/coinPay"
+        data:
+          "userId": ""
+          "comicId": ""
+          "chapterId": ""
+          "timeStamp": ""
+
+
