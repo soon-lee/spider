@@ -1,13 +1,33 @@
+use std::collections::HashMap;
+
 use base64::Engine;
 use rand::Rng;
+use reqwest::Response;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+
+use crate::utils::mysql::User;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct UserInfo {
+    id: String,
+    account: String,
+    pwd: String,
+    nickName: String,
+    devType: u8,
+    devCode: String,
+    lastLoginIp: String,
+    lastLoginTime: String,
+    createTime: String,
+    appId: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct CrawlConfig {
     origins: Vec<String>,
     scripts: Vec<String>,
-    options: std::collections::HashMap<String, String>,
-    configs: std::collections::HashMap<String, String>,
+    options: HashMap<String, String>,
+    configs: HashMap<String, String>,
 }
 
 impl CrawlConfig {
@@ -56,7 +76,8 @@ impl CrawlConfig {
 
     pub(crate) fn random_str(&self) -> String {
         self.configs
-            .get("template_str").unwrap()
+            .get("template_str")
+            .unwrap()
             .chars()
             .map(|c| {
                 let mut rander = rand::thread_rng();
@@ -109,26 +130,56 @@ impl CrawlConfig {
             hash
         )
     }
-    pub(crate) fn encrypt(&self, data: &String)->String{
-        let bytes = soft_aes::aes::aes_enc_ecb(data.as_bytes(), self.configs.get("aes_key").unwrap().as_bytes(), Some("PKCS7")).unwrap();
+    pub(crate) fn encrypt(&self, data: &String) -> String {
+        let bytes = soft_aes::aes::aes_enc_ecb(
+            data.as_bytes(),
+            self.configs.get("aes_key").unwrap().as_bytes(),
+            Some("PKCS7"),
+        )
+        .unwrap();
         base64::engine::general_purpose::STANDARD.encode(&bytes)
     }
     pub(crate) fn decrypt(&self, data: &String) -> String {
-        let bytes =soft_aes::aes::aes_dec_ecb(data.as_bytes(), self.configs.get("aes_key").unwrap().as_bytes(), Some("PKCS7")).unwrap();
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(data)
+            .unwrap();
+        let bytes = soft_aes::aes::aes_dec_ecb(
+            &*bytes,
+            self.configs.get("aes_key").unwrap().as_bytes(),
+            Some("PKCS7"),
+        )
+        .unwrap();
         String::from_utf8(bytes).unwrap()
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct Action {
+    name: String,
+    method: String,
+    path: String,
+    data: HashMap<String, String>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct Actions {
+    origin: String,
+    headers: HashMap<String, String>,
+    group: Vec<Action>,
+}
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Config {
     pub(crate) crawl: CrawlConfig,
+    pub(crate) actions: Actions,
 }
 impl Config {
-    pub(crate) fn load() -> Self {
+    pub(crate) async fn load() -> Self {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
             .expect("CARGO_MANIFEST_DIR environment variable not found");
         let config_path = std::path::PathBuf::from(&manifest_dir).join(r#"configs\crawl.yaml"#);
         let yaml = std::fs::read_to_string(config_path).expect("Unable to read config file");
-        serde_yaml::from_str(&yaml).expect("Unable to parse config file")
+        let mut config: Config = serde_yaml::from_str(&yaml).expect("Unable to parse config file");
+        config.crawl.get_scripts().await;
+        config.crawl.extract_options_from_scripts().await;
+        config
     }
     fn dump(&self) {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
@@ -137,23 +188,72 @@ impl Config {
         let config = serde_yaml::to_string(&self).expect("Unable to serialize config");
         std::fs::write(config_path, config).expect("Unable to write config file");
     }
+    pub(crate) async fn client_post(&self, action_name: &str, data: &String) -> Response {
+        let client = reqwest::Client::new();
+        let action = self
+            .actions
+            .group
+            .iter()
+            .find(|action| action.name == *action_name)
+            .unwrap();
+        let url = format!(
+            "{}{}",
+            self.actions.origin,
+            self.crawl.auth_path(&action.path)
+        );
+        client
+            .post(url)
+            .header("Appid", self.crawl.configs.get("app_id").unwrap())
+            .json(&json!({"data":data}))
+            .send()
+            .await
+            .unwrap()
+    }
 }
-pub(crate) async fn register_user(config:&CrawlConfig) {
-    let client = reqwest::Client::new();
-    let response = client
-        .post(format!("https://wwapi1.xsjk99.com{}",config.auth_path(&"/api/h5/getChapterContent".to_string())))
-        .header("Appid",config.configs.get("app_id").unwrap())
-        .header("Content-Type","application/json")
-        .body("{\"data\":\"1FE8heap7dhnyi2J0RV9aGfeVWwp0RC/AlfaJrI0pSzrS4si0qTjZSGbhJTyHoxHrkrPp8eCkI2WdK4Vysdn2OW2KBYDc1OaKeLoMw8+Kuo=\"}")
-        // .body(format!("{{\"data\":\"{}\"}}",config.encrypt(&format!("{{\"devType\":\"3\",\"timestamp\":\"{}\"}}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()/1000))))
-        .send()
-        .await
-        .unwrap();
+pub(crate) async fn register_user(config: &Config) -> Result<User, ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "注册用户";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert(
+        "devType".to_string(),
+        crawl.configs.get("dev_type").unwrap().to_string(),
+    );
+    data.insert(
+        "timeStamp".to_string(),
+        (std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_millis())
+            .unwrap()
+            / 1000)
+            .to_string(),
+    );
+    let data = crawl.encrypt(&serde_json::to_string(&data).unwrap());
+    let response = config.client_post(action_name, &data).await;
     if response.status().is_success() {
-        println!("Register user successfully");
-        let response_text = response.text().await.unwrap();
-        println!("Response: {}", response_text);
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            let user_info: UserInfo = serde_json::from_str(
+                crawl
+                    .decrypt(&json["result"].to_string().trim_matches('"').to_string())
+                    .as_str(),
+            )
+            .unwrap();
+            let user = User::new(
+                user_info.id.parse::<u64>().unwrap(),
+                user_info.account,
+                user_info.pwd,
+            );
+            Ok(user)
+        } else {
+            Err(())
+        }
     } else {
-        println!("Error: {}", response.status());
+        Err(())
     }
 }

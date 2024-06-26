@@ -16,10 +16,7 @@ async fn main() {
 
 #[tokio::test]
 async fn test_config() {
-    let mut config = utils::info::Config::load();
-    println!("{:?}", config);
-    config.crawl.get_scripts().await;
-    config.crawl.extract_options_from_scripts().await;
-    println!("{:?}", config);
-    utils::info::register_user(&config.crawl).await;
+    let config = utils::crawl::Config::load().await;
+    let user = utils::crawl::register_user(&config).await.expect("TODO: panic message");
+    println!("{:?}", user);
 }

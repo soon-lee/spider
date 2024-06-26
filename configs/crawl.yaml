@@ -25,7 +25,7 @@ crawl:
     dev_type: '\{\s*[''"]?devType[''"]?\s*:\s*[''"]?(.*?)[''"]?\}'
   configs: {}
 actions:
-  - origin: "https://wwapi1.xsjk99.com"
+    origin: "https://wwapi1.xsjk99.com"
     headers:
       "Appid": ""
     group:
@@ -41,6 +41,11 @@ actions:
         data:
           "userId": ""
           "isUpdate": ""
+          "timeStamp": ""
+      - name: "每日签到"
+        method: "POST"
+        path: "/api/user/checkSign"
+        data:
           "timeStamp": ""
       - name: "任务列表"
         method: "POST"
