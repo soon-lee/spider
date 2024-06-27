@@ -6,7 +6,7 @@ use reqwest::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::utils::mysql::User;
+use crate::utils::mysql::{Book, Category, Chapter, Task, User};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct UserInfo {
@@ -21,7 +21,92 @@ pub(crate) struct UserInfo {
     createTime: String,
     appId: String,
 }
-
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct TaskInfo {
+    id: String,
+    taskNo: u8,
+    taskType: u8,
+    triggerValue: u8,
+    giveCoin: u8,
+    giveVip: u8,
+    hrefUrl: String,
+    createTime: String,
+    ext: u8,
+    taskName: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct CategoryInfo {
+    id: String,
+    title: String,
+    status: u8,
+    sort: String,
+    createBy: String,
+    createTime: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct SnapshotBook {
+    note: String,
+    clickCount: u64,
+    isSyn: u8,
+    pic: String,
+    title: String,
+    overType_dictText: String,
+    categoryId_dictText: String,
+    bigPic: String,
+    id: String,
+    author: String,
+    overType: u8,
+    tags: String,
+    categoryId: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct SnapshotInfo {
+    records:Vec<SnapshotBook>
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ChapterInfo {
+    id: String,
+    title: String,
+    pic: String,
+    sort: u32,
+    price: u32,
+    isSyn: u8,
+    createTime: String,
+    feel: u8,
+    payMode: u8,
+    formatTime: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct BookInfo {
+    id: String,
+    title: String,
+    pic: String,
+    bigPic: String,
+    author: String,
+    note: String,
+    payMode: u8,
+    feelCount: u8,
+    payCoin: u8,
+    praiseCount: u64,
+    clickCount: u64,
+    favCount: u64,
+    sales: u8,
+    payTotal: u8,
+    overType: u8,
+    categoryId: String,
+    isSyn: u8,
+    sort: u32,
+    status: u8,
+    tags: String,
+    indexCol: String,
+    createTime: String,
+    updateTime: String,
+    ext: Vec<ChapterInfo>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ItemInfo {
+    content:Vec<String>
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct CrawlConfig {
     origins: Vec<String>,
@@ -210,6 +295,14 @@ impl Config {
             .unwrap()
     }
 }
+fn timestamp_str() -> String {
+    (std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_millis())
+        .unwrap()
+        / 1000)
+        .to_string()
+}
 pub(crate) async fn register_user(config: &Config) -> Result<User, ()> {
     let Config { crawl, actions } = config;
     let action_name = "注册用户";
@@ -224,15 +317,7 @@ pub(crate) async fn register_user(config: &Config) -> Result<User, ()> {
         "devType".to_string(),
         crawl.configs.get("dev_type").unwrap().to_string(),
     );
-    data.insert(
-        "timeStamp".to_string(),
-        (std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|duration| duration.as_millis())
-            .unwrap()
-            / 1000)
-            .to_string(),
-    );
+    data.insert("timeStamp".to_string(), timestamp_str());
     let data = crawl.encrypt(&serde_json::to_string(&data).unwrap());
     let response = config.client_post(action_name, &data).await;
     if response.status().is_success() {
@@ -253,6 +338,334 @@ pub(crate) async fn register_user(config: &Config) -> Result<User, ()> {
         } else {
             Err(())
         }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn task_list(config: &Config, user_id: &String) -> Result<Vec<Task>, ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "任务列表";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("userId".to_string(), user_id.to_string());
+    data.insert("timeStamp".to_string(), timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            let task_info_list: Vec<TaskInfo> = serde_json::from_str(
+                crawl
+                    .decrypt(&json["result"].to_string().trim_matches('"').to_string())
+                    .as_str(),
+            )
+            .unwrap();
+            let task_list = task_info_list
+                .iter()
+                .map(|task_info| {
+                    Task::new(
+                        task_info.taskNo,
+                        task_info.giveCoin,
+                        task_info.taskName.clone(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Ok(task_list)
+        } else {
+            Err(())
+        }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn category_list(config: &Config) -> Result<Vec<Category>, ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "漫画分类";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("c".to_string(), "yml".to_string());
+    data.insert("timeStamp".to_string(), timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            let category_info_list: Vec<CategoryInfo> = serde_json::from_str(
+                crawl
+                    .decrypt(&json["result"].to_string().trim_matches('"').to_string())
+                    .as_str(),
+            )
+                .unwrap();
+            let category_list = category_info_list
+                .iter()
+                .map(|category_info| {
+                    Category::new(
+                        category_info.id.parse::<u64>().unwrap(),
+                        category_info.title.clone(),
+                        category_info.sort.parse::<u32>().unwrap(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Ok(category_list)
+        }else{
+            Err(())
+        }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn snapshot_list(
+    config: &Config,
+    category_id: u64,
+    page: u32,
+    limit: u32,
+) -> Result<Vec<Book>, ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "分类查询";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("categoryId".to_string(), category_id.to_string());
+    data.insert("page".to_string(), page.to_string());
+    data.insert("limit".to_string(), limit.to_string());
+    data.insert("timeStamp".to_string(), timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            let snapshot_info: SnapshotInfo = serde_json::from_str(
+                crawl
+                    .decrypt(&json["result"].to_string().trim_matches('"').to_string())
+                    .as_str(),
+            )
+                .unwrap();
+            let book_list = snapshot_info.records
+                .iter()
+                .map(|snapshot_info| {
+                    Book::new(
+                        snapshot_info.id.clone(),
+                        snapshot_info.title.clone(),
+                        snapshot_info.author.clone(),
+                        snapshot_info.note.clone(),
+                        snapshot_info.pic.clone(),
+                        snapshot_info.bigPic.clone(),
+                        0,
+                        snapshot_info.clickCount,
+                        0,
+                        snapshot_info.overType_dictText.clone(),
+                        snapshot_info.categoryId.parse::<u64>().unwrap(),
+                        0,
+                        snapshot_info.tags.clone(),
+                        Vec::new()
+                    )
+                })
+                .collect::<Vec<_>>();
+            Ok(book_list)
+        }else{
+            Err(())
+        }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn comic_info(config: &Config, comic_id: u64) -> Result<Book, ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "漫画信息";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("comicId".to_string(), comic_id.to_string());
+    data.insert("limit".to_string(), "5".to_string());
+    data.insert("timeStamp".to_string(), timestamp_str());
+    let data = crawl.encrypt(&serde_json::to_string(&data).unwrap());
+    let response = config.client_post(action_name, &data).await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            let book_info: BookInfo = serde_json::from_str(
+                crawl
+                    .decrypt(&json["result"].to_string().trim_matches('"').to_string())
+                    .as_str(),
+            )
+            .unwrap();
+            let book = Book::new(
+                book_info.id.clone(),
+                book_info.title.clone(),
+                book_info.author.clone(),
+                book_info.note.clone(),
+                book_info.pic.clone(),
+                book_info.bigPic.clone(),
+                book_info.praiseCount,
+                book_info.clickCount,
+                book_info.favCount,
+                "".parse().unwrap(),
+                book_info.categoryId.parse::<u64>().unwrap(),
+                book_info.sort,
+                book_info.tags.clone(),
+                book_info.ext.iter().map(|chapter_info| {
+                    Chapter::new(
+                        chapter_info.id.clone(),
+                        chapter_info.title.clone(),
+                        chapter_info.pic.clone(),
+                        chapter_info.sort,
+                        chapter_info.price,
+                        vec![],
+                    )
+                }).collect::<Vec<_>>(),
+            );
+            Ok(book)
+        } else {
+            Err(())
+        }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn chapter_content(config: &Config, chapter_id: u64, user_id: u64) -> Result<Vec<String>, ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "章节内容";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("chapterId".to_string(), chapter_id.to_string());
+    data.insert("userId".to_string(), user_id.to_string());
+    data.insert("timeStamp".to_string(), timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            let item_info: ItemInfo = serde_json::from_str(
+                crawl
+                    .decrypt(&json["result"].to_string().trim_matches('"').to_string())
+                    .as_str(),
+            )
+                .unwrap();
+            Ok(item_info.content)
+        }else { Err(()) }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn pay_chapter(config: &Config, user_id: u64,comic_id:u64,chapter_id:u64) -> Result<(), ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "购买章节";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("userId".to_string(), user_id.to_string());
+    data.insert("comicId".to_string(), comic_id.to_string());
+    data.insert("chapterId".to_string(), chapter_id.to_string());
+    data.insert("timeStamp".to_string(), timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            Ok(())
+        }else { Err(()) }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn daily_sign(config: &Config, user_id: &String) -> Result<(), ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "每日签到";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("userId".to_string(), user_id.to_string());
+    data.insert("timeStamp".to_string(),timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            Ok(())
+        }else { Err(()) }
+    } else {
+        Err(())
+    }
+}
+pub(crate) async fn daily_work(config: &Config, task_no: u8, user_id: &String) -> Result<(), ()> {
+    let Config { crawl, actions } = config;
+    let action_name = "任务奖励";
+    let mut data = actions
+        .group
+        .iter()
+        .find(|action| action.name == action_name)
+        .unwrap()
+        .data
+        .clone();
+    data.insert("taskNo".to_string(), task_no.to_string());
+    data.insert("userId".to_string(), user_id.to_string());
+    data.insert("timeStamp".to_string(),timestamp_str());
+    let response = config
+        .client_post(
+            action_name,
+            &crawl.encrypt(&serde_json::to_string(&data).unwrap()),
+        )
+        .await;
+    if response.status().is_success() {
+        let json = &response.json::<Value>().await.unwrap();
+        if json["code"] == 0 {
+            Ok(())
+        }else { Err(()) }
     } else {
         Err(())
     }

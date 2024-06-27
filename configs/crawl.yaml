@@ -46,6 +46,7 @@ actions:
         method: "POST"
         path: "/api/user/checkSign"
         data:
+          "userId": ""
           "timeStamp": ""
       - name: "任务列表"
         method: "POST"
@@ -58,7 +59,7 @@ actions:
         path: "/api/user/getTaskReward"
         data:
           "userId": ""
-          "taskId": ""
+          "taskNo": ""
           "timeStamp": ""
       - name: "漫画分类"
         method: "POST"
@@ -88,7 +89,7 @@ actions:
           "chapterId": ""
           "userId": ""
           "timeStamp": ""
-      - name: "漫画搜索"
+      - name: "购买章节"
         method: "POST"
         path: "/api/user/coinPay"
         data:
@@ -96,5 +97,3 @@ actions:
           "comicId": ""
           "chapterId": ""
           "timeStamp": ""
-
-

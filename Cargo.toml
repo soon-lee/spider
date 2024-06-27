@@ -18,3 +18,4 @@ soft-aes = "0.2.2"
 base64 = "0.22.1"
 qiniu-sdk = {version = "0.2.4", features = ["reqwest", "async", "apis","upload"]}
 sqlx = {version = "0.7.4",features = ["runtime-tokio", "mysql"]}
+chrono = "0.4.38"
