@@ -1,5 +1,5 @@
 database:
   type: mysql
-  host: rds-db-soonlee.mysql.rds.aliyuncs.com
+  host: rds-plugins-soonlee.mysql.rds.aliyuncs.com
   port: 3306
   user: xxmh
