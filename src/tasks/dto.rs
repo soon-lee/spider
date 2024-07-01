@@ -521,12 +521,12 @@ pub(crate) struct SnapshotInfo {
  */
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct ChapterInfo {
-    id: String,
-    title: String,
-    pic: String,
-    sort: u32,
+    pub(crate) id: String,
+    pub(crate) title: String,
+    pub(crate) pic: String,
+    pub(crate) sort: u32,
     #[serde(default = "default_price")]
-    price: u32,
+    pub(crate) price: u32,
     isSyn: u8,
     createTime: String,
     feel: u8,
@@ -717,30 +717,30 @@ fn default_price() -> u32 {
  */
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct BookInfo {
-    id: String,
-    title: String,
-    pic: String,
-    bigPic: String,
-    author: String,
-    note: String,
+    pub(crate) id: String,
+    pub(crate) title: String,
+    pub(crate) pic: String,
+    pub(crate) bigPic: String,
+    pub(crate) author: String,
+    pub(crate) note: String,
     payMode: u8,
     feelCount: u8,
     payCoin: u8,
-    praiseCount: u64,
-    clickCount: u64,
-    favCount: u64,
+    pub(crate) praiseCount: u64,
+    pub(crate) clickCount: u64,
+    pub(crate) favCount: u64,
     sales: u8,
     payTotal: u8,
     overType: u8,
-    categoryId: String,
+    pub(crate) categoryId: String,
     isSyn: u8,
-    sort: u32,
+    pub(crate) sort: u32,
     status: u8,
-    tags: String,
+    pub(crate) tags: String,
     indexCol: String,
     createTime: String,
     updateTime: String,
-    ext: Vec<ChapterInfo>,
+    pub(crate) ext: Vec<ChapterInfo>,
 }
 /**
  * @locale: zh-CN
@@ -776,5 +776,5 @@ pub(crate) struct BookInfo {
  */
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct ItemInfo {
-    content: Vec<String>,
+    pub(crate) content: Vec<String>,
 }

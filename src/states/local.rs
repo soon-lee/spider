@@ -49,9 +49,12 @@ impl WebConfig {
             let html = res.text().await.unwrap();
             self.options.iter().for_each(|(key, value)| {
                 let pattern = regex::Regex::new(value).unwrap();
-                if let Some(captures) = pattern.captures(&html) {
-                    configs.insert(key.clone(), captures[1].to_string());
-                };
+                match pattern.captures(&html){
+                    Some(captures) => {
+                        configs.insert(key.clone(),captures[1].parse().unwrap());
+                    },
+                    None => {}
+                }
             });
         }
         configs
@@ -73,11 +76,10 @@ impl Config {
         let config_path = PathBuf::from(&manifest_dir).join(r#"configs\crawl.yaml"#);
         let yaml = std::fs::read_to_string(config_path).expect("Unable to read config file");
         let mut config: Config = serde_yaml::from_str(&yaml).expect("Unable to parse config file");
-        config.extract_options_from_scripts().await;
         config
     }
     pub(crate) async fn get_options(&self) -> HashMap<String, String> {
-        let mut configs = self.extract_options_from_scripts().await;
+        let mut configs = self.web.extract_options_from_scripts().await;
         configs.insert("origin".to_string(), self.api.origin.clone());
         configs
     }

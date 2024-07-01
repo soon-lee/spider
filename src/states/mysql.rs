@@ -20,9 +20,9 @@ impl User {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Task {
-    task_no: u8,
+    pub(crate) task_no: u8,
     give_coin: u8,
-    task_name: String,
+    pub(crate) task_name: String,
 }
 impl Task {
     pub(crate) fn new(task_no: u8, give_coin: u8, task_name: String) -> Self {
@@ -35,8 +35,8 @@ impl Task {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Category {
-    id: u64,
-    title: String,
+    pub(crate) id: u64,
+    pub(crate) title: String,
     sort: u32,
 }
 impl Category {
@@ -45,9 +45,9 @@ impl Category {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone,Debug, Serialize, Deserialize)]
 pub(crate) struct Chapter {
-    id: String,
+    pub(crate) id: String,
     title: String,
     pic: String,
     sort: u32,
@@ -73,22 +73,22 @@ impl Chapter {
         }
     }
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct Book {
-    id: String,
-    title: String,
-    author: String,
-    note: String,
-    pic: String,
-    big_pic: String,
-    praise_count: u64,
-    click_count: u64,
-    favorite_count: u64,
-    over_type: String,
-    category_id: u64,
-    sort: u32,
-    tags: String,
-    chapters: Vec<Chapter>,
+    pub(crate) id: String,
+    pub(crate) title: String,
+    pub(crate) author: String,
+    pub(crate) note: String,
+    pub(crate) pic: String,
+    pub(crate) big_pic: String,
+    pub(crate) praise_count: u64,
+    pub(crate) click_count: u64,
+    pub(crate) favorite_count: u64,
+    pub(crate) over_type: String,
+    pub(crate) category_id: u64,
+    pub(crate) sort: u32,
+    pub(crate) tags: String,
+    pub(crate) chapters: Vec<Chapter>,
 }
 impl Book {
     pub(crate) fn new(
@@ -125,7 +125,6 @@ impl Book {
         }
     }
 }
-
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
     // let url =

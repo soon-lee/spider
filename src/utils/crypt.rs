@@ -27,7 +27,7 @@ pub(crate) fn random_str(template:&str) -> String {
         .collect::<Vec<_>>()
         .join("")
 }
-pub(crate) fn fill_path(path: &str) -> String {
+pub(crate) fn fill_path(path: String) -> String {
     let mut result = path.clone();
     if !path.starts_with("/") {
         result.insert(0, '/');
