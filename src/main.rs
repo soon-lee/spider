@@ -23,9 +23,9 @@ async fn main() {
 }
 
 #[tokio::test]
-async fn test_xxmh() {
-    let config = Config::load().await;
-    let options = config.get_options().await;
+async fn test_xxmh()-> Result<(), String> {
+    let config = Config::load().await?;
+    let options = config.get_options().await?;
     let options = &options;
     let user = register_user(options).await.unwrap();
     println!("{:?}", user);
@@ -106,4 +106,15 @@ async fn test_xxmh() {
     println!("{:?}", chapter_content);
     let user = user_info(user.id, options).await.unwrap();
     println!("{:?}", user);
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_xxmh_api()-> Result<(), String> {
+    let config = Config::load().await?;
+    let options = config.get_options().await?;
+    let options = &options;
+    let user = register_user(options).await.unwrap();
+    println!("{:?}", user);
+    Ok(())
 }

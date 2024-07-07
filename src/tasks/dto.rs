@@ -743,36 +743,35 @@ pub(crate) struct BookInfo {
     pub(crate) ext: Vec<ChapterInfo>,
 }
 /**
- * @locale: zh-CN
- * # `ChapterInfo` structure
- * - **Full Qualified Name**: `crate::tasks::dto::ChapterInfo`
- * - **Function**: This structure is used to store chapter information, including chapter content
+ * @locale zh-CN
+ * # `ItemInfo` 结构体
+ * - **全限定名称**：`crate::tasks::dto::ItemInfo`
+ * - **功能**：此结构体用于存储项信息，主要包含内容列表，适用于需要保存一系列字符串数据的场景。
+ *
+ * # 特质
+ * - `Debug`：为结构体提供调试打印格式。
+ * - `Deserialize`：允许从JSON等格式反序列化实例。
+ * - `Serialize`：允许序列化实例为JSON等格式。
+ *
+ * # 字段
+ * ## content
+ * - **类型**：`alloc::vec::Vec<alloc::string::String>`
+ * - **描述**: 存储字符串内容的列表，每个元素代表一项具体内容。
+ *
+ * @locale en-US
+ * # `ItemInfo` Structure
+ * - **Full Qualified Name**: `crate::tasks::dto::ItemInfo`
+ * - **Function**: This structure is used to store item information, primarily containing a list of contents, suitable for scenarios where a series of string data needs to be saved.
  *
  * # Trait
- * - `Debug`: Used for debugging the structure.
- * - `Deserialize`: Used for deserializing the structure.
- * - `Serialize`: Used for serializing the structure.
+ * - `Debug`: Provides a debug print format for the structure.
+ * - `Deserialize`: Enables deserialization of instances from formats like JSON.
+ * - `Serialize`: Enables serialization of instances into formats like JSON.
  *
  * # Fields
  * ## content
  * - **Type**: `alloc::vec::Vec<alloc::string::String>`
- * - **Description**: Content.
- *
- * @locale: en-US
- * # `ChapterInfo` structure
- * - **Full Qualified Name**: `crate::tasks::dto::ChapterInfo`
- * - **Function**: This structure is used to store chapter information, including chapter content
- *
- * # Trait
- * - `Debug`: Used for debugging the structure.
- * - `Deserialize`: Used for deserializing the structure.
- * - `Serialize`: Used for serializing the structure.
- *
- * # Fields
- * ## content
- * - **Type**: `alloc::vec::Vec<alloc::string::String>`
- * - **Description**: Content.
- *
+ * - **Description**: A list storing string contents, where each element represents a specific piece of content.
  */
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct ItemInfo {
