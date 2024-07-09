@@ -1,7 +1,7 @@
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use rand::{Rng, thread_rng};
-use soft_aes::aes::{aes_dec_ecb, aes_enc_ecb};
+use soft_aes::aes::{aes_dec_cbc, aes_dec_ecb, aes_enc_cbc, aes_enc_ecb};
 
 use crate::utils::datetime::timestamp_str;
 
@@ -432,4 +432,13 @@ pub(crate) fn auth_path(path: &str, template: &str, default: &str) -> Result<Str
         hash
     );
     Ok(path)
+}
+
+pub(crate) fn encrypt_bytes(input: &[u8], key: &str, iv: &str) -> Result<Vec<u8>, String> {
+    let iv = md5::compute(iv).0;
+    aes_enc_cbc(input, key.as_bytes(), &iv, Some("PKCS7")).map_err(|err| format!("AES加密失败：{}", err))
+}
+pub(crate) fn decrypt_bytes(input: &[u8], key: &str, iv: &[u8;16]) -> Result<String, String> {
+    let bytes = aes_dec_cbc(input, key.as_bytes(), iv,Some("PKCS7")).map_err(|err| format!("AES解密失败：{}", err))?;
+    Ok(STANDARD.encode(&bytes))
 }

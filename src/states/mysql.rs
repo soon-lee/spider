@@ -222,35 +222,36 @@ pub(crate) async fn get_books(pool: MySqlPool) -> Result<Vec<Book>, String> {
 }
 pub(crate) async fn get_book_by_id(pool: MySqlPool, book_id: String) -> Result<Book, String> {
     let rows = query("SELECT `book`.*,`chapter`.`id` `chapter_id`,`chapter`.`title` `chapter_title`,`chapter`.`pic` `chapter_pic`,`chapter`.`sort` `chapter_sort`,`chapter`.`price`,`chapter`.`items`,`chapter`.`book_id`  FROM `db_spider`.`tb_comic_xxmh_book` `book` LEFT JOIN `db_spider`.`tb_comic_xxmh_chapter` `chapter` ON `book`.`id` = `chapter`.`book_id` WHERE `book`.`id` = ?")
-        .bind(book_id)
+        .bind(&book_id)
         .fetch_all(&pool)
-        .await.map_err(|err| format!("查询书籍{}失败:{}", book_id, err))?;
+        .await.map_err(|err| format!("查询书籍{}失败:{}", &book_id, err))?;
     let mut chapters = Vec::new();
     let mut book : Option<Book> = None;
     for row in rows{
         if book.is_none(){
             book = Some(Book::new(row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6), row.get(7), row.get(8), row.get(9), row.get(10), row.get(11), row.get(12),vec![]));
         }
-        let items = row.get(19).split(',').map(|s| s.to_string()).collect::<Vec<_>>();
+        let items_str:String = row.get(19);
+        let items: Vec<String> = items_str.split(',').map(|s| s.to_string()).collect::<Vec<_>>();
         chapters.push(Chapter::new(row.get(13), row.get(14), row.get(15), row.get(16), row.get(17), row.get(18), items));
     }
-    Ok(book)
+    book.ok_or(format!("书籍{}不存在", book_id)).map_err(|err| format!("查询书籍{}失败:{}", book_id, err))
 }
 pub(crate) async fn add_book(pool: MySqlPool, book: Book) -> Result<u64, String> {
     sqlx::query("INSERT INTO `db_spider`.`tb_comic_xxmh_book` (`id`, `title`, `author`, `note`, `pic`, `big_pic`, `praise_count`, `click_count`, `favorite_count`, `over_type`, `category_id`, `sort`, `tags`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-        .bind(book.id)
-        .bind(book.title)
-        .bind(book.author)
-        .bind(book.note)
-        .bind(book.pic)
-        .bind(book.big_pic)
-        .bind(book.praise_count)
-        .bind(book.click_count)
-        .bind(book.favorite_count)
-        .bind(book.over_type)
-        .bind(book.category_id)
-        .bind(book.sort)
-        .bind(book.tags)
+        .bind(&book.id)
+        .bind(&book.title)
+        .bind(&book.author)
+        .bind(&book.note)
+        .bind(&book.pic)
+        .bind(&book.big_pic)
+        .bind(&book.praise_count)
+        .bind(&book.click_count)
+        .bind(&book.favorite_count)
+        .bind(&book.over_type)
+        .bind(&book.category_id)
+        .bind(&book.sort)
+        .bind(&book.tags)
         .execute(&pool)
         .await
         .map(|res| res.last_insert_id())
@@ -284,10 +285,13 @@ pub(crate) async fn add_books(pool: MySqlPool, books: Vec<Book>) -> Result<u64, 
 }
 pub(crate) async fn get_chapters_by_book_id(pool: MySqlPool, book_id: u64) -> Result<Vec<Chapter>, String> {
     query("SELECT * FROM `db_spider`.`tb_comic_xxmh_chapter` WHERE `book_id` = ?")
-        .bind(book_id)
+        .bind(&book_id)
         .fetch_all(&pool)
         .await
-        .map(|res|res.into_iter().map(|row|Chapter::new(row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6).split(',').map(|s| s.to_string()).collect::<Vec<_>>())).collect::<Vec<_>>())
+        .map(|res|res.into_iter().map(|row|{
+            let items_str:String = row.get(6);
+            let items: Vec<String> = items_str.split(',').map(|s| s.to_string()).collect::<Vec<_>>();
+            Chapter::new(row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), items)}).collect::<Vec<_>>())
         .map_err(|err| format!("查询书籍{}的章节列表失败:{}", book_id, err))
 }
 pub(crate) async fn get_chapter_by_id(
@@ -298,8 +302,8 @@ pub(crate) async fn get_chapter_by_id(
     sqlx::query(
         "SELECT * FROM `db_spider`.`tb_comic_xxmh_chapter` WHERE `book_id` = ? AND `id` = ?",
     )
-    .bind(book_id)
-    .bind(chapter_id)
+    .bind(&book_id)
+    .bind(&chapter_id)
     .fetch_all(&pool)
     .await
     .map(|res| res.len() as u64)
@@ -307,13 +311,13 @@ pub(crate) async fn get_chapter_by_id(
 }
 pub(crate) async fn add_chapter(pool: MySqlPool, chapter: Chapter) -> Result<u64, String> {
     sqlx::query("INSERT INTO `db_spider`.`tb_comic_xxmh_chapter` (`id`,`title`,`pic`,`sort`,`price`,`items`,`book_id`) VALUES (?, ?, ?, ?, ?, ?, ?)")
-        .bind(chapter.id)
-        .bind(chapter.title)
-        .bind(chapter.pic)
-        .bind(chapter.sort)
-        .bind(chapter.price)
-        .bind(chapter.items.join(","))
-        .bind(chapter.book_id)
+        .bind(&chapter.id)
+        .bind(&chapter.title)
+        .bind(&chapter.pic)
+        .bind(&chapter.sort)
+        .bind(&chapter.price)
+        .bind(&chapter.items.join(","))
+        .bind(&chapter.book_id)
         .execute(&pool)
         .await
         .map(|res| res.last_insert_id())
@@ -332,9 +336,9 @@ pub(crate) async fn add_chapters(pool: MySqlPool, chapters: Vec<Chapter>) -> Res
                 chapter.price,
                 chapter.items.join(","),
                chapter.book_id
-            )
+            ))
             .collect::<Vec<_>>()
-            .join(", "));
+            .join(", ");
     query(&format!("INSERT INTO `db_spider`.`tb_comic_xxmh_chapter` (`id`, `title`, `pic`, `sort`, `price`, `items`, `book_id`) VALUES {}", values)).execute(&pool).await.map(|res| res.last_insert_id())
         .map_err(|err| format!("批量添加章节失败:{}", err))
 }

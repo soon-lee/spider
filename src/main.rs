@@ -1,3 +1,4 @@
+use crate::states::cloud::QiniuClient;
 use crate::states::local::Config;
 use crate::states::mysql::Book;
 use crate::tasks::action::{
@@ -24,6 +25,7 @@ async fn main() {
 
 #[tokio::test]
 async fn test_xxmh()-> Result<(), String> {
+    let qiniu = QiniuClient::construct()?;
     let config = Config::load().await?;
     let options = config.get_options().await?;
     let options = &options;
@@ -104,6 +106,15 @@ async fn test_xxmh()-> Result<(), String> {
     .await
     .unwrap();
     println!("{:?}", chapter_content);
+    for item in &chapter_content {
+        let client = reqwest::Client::new();
+        let res = client.get(item).send().await.map_err(|_|"pic连接失败")?;
+        let bytes = res.bytes().await.map_err(|_|"pic请求失败")?;
+        let its: Vec<&str> = item.split("/").collect::<Vec<_>>();
+        let name = its[its.len() - 2];
+        qiniu.post_bytes(&bytes, name).await?;
+        panic!("end")
+    }
     let user = user_info(user.id, options).await.unwrap();
     println!("{:?}", user);
     Ok(())

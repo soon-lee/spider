@@ -748,6 +748,7 @@ pub(crate) async fn comic_info(
             .map(|chapter_info| {
                 Chapter::new(
                     chapter_info.id.clone(),
+                    book_info.id.clone(),
                     chapter_info.title.clone(),
                     chapter_info.pic.clone(),
                     chapter_info.sort,
