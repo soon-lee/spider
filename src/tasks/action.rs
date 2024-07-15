@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
-use reqwest::Error;
 use serde_json::{json, Value};
 
-use crate::states::local::Config;
 use crate::states::mysql::{Book, Category, Chapter, Task, User};
 use crate::tasks::dto::{BookInfo, CategoryInfo, ItemInfo, SnapshotInfo, TaskInfo, UserInfo};
 use crate::utils::crypt::{aes_decrypt, aes_encrypt, auth_path};
@@ -205,7 +203,7 @@ pub(crate) async fn register_user(options: &HashMap<String, String>) -> Result<U
         "devType": dev_type,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/user/regUser", &data, options).await?;
 
@@ -301,7 +299,7 @@ pub(crate) async fn user_info(
         "userId": user_id,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/user/getUserInfo", &data, options).await?;
 
@@ -400,7 +398,7 @@ pub(crate) async fn task_list(
         "userId": user_id,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/user/getTaskList", &data, options).await?;
 
@@ -486,7 +484,7 @@ pub(crate) async fn category_list(
         "c": "yml",
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/h5/getCategory", &data, options).await?;
 
@@ -496,12 +494,8 @@ pub(crate) async fn category_list(
     let category_list = category_info_list
         .into_iter()
         .map(|category_info| {
-            let id = category_info
-                .id
-                .parse::<u64>().unwrap();
-            let sort = category_info
-                .sort
-                .parse::<u32>().unwrap();
+            let id = category_info.id.parse::<u64>().unwrap();
+            let sort = category_info.sort.parse::<u32>().unwrap();
             Category::new(id, category_info.title, sort)
         })
         .collect::<Vec<_>>();
@@ -603,7 +597,7 @@ pub(crate) async fn snapshot_list(
         "categoryId": category_id,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/h5/getComicByCategoryId", &data, options).await?;
 
@@ -614,7 +608,7 @@ pub(crate) async fn snapshot_list(
         .iter()
         .map(|snapshot_info| {
             Book::new(
-                snapshot_info.id.clone(),
+                snapshot_info.id.parse::<u64>().unwrap(),
                 snapshot_info.title.clone(),
                 snapshot_info.author.clone(),
                 snapshot_info.note.clone(),
@@ -627,7 +621,7 @@ pub(crate) async fn snapshot_list(
                 snapshot_info.categoryId.parse::<u64>().unwrap(),
                 0,
                 snapshot_info.tags.clone(),
-                vec![]
+                vec![],
             )
         })
         .collect::<Vec<_>>();
@@ -722,14 +716,14 @@ pub(crate) async fn comic_info(
         "limit": limit,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/h5/getComicInfo", &data, options).await?;
     let book_info: BookInfo = serde_json::from_str(&response_text)
         .map_err(|err| format!("从Json解析SnapshotInfo失败: {}", err))?;
 
     let book = Book::new(
-        book_info.id.clone(),
+        book_info.id.parse::<u64>().unwrap(),
         book_info.title.clone(),
         book_info.author.clone(),
         book_info.note.clone(),
@@ -747,8 +741,8 @@ pub(crate) async fn comic_info(
             .iter()
             .map(|chapter_info| {
                 Chapter::new(
-                    chapter_info.id.clone(),
-                    book_info.id.clone(),
+                    chapter_info.id.parse::<u64>().unwrap(),
+                    book_info.id.parse::<u64>().unwrap(),
                     chapter_info.title.clone(),
                     chapter_info.pic.clone(),
                     chapter_info.sort,
@@ -845,7 +839,7 @@ pub(crate) async fn chapter_content(
         "userId": user_id,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
     let response_text = post_client("/api/h5/getChapterContent", &data, options).await?;
     let item_info: ItemInfo = serde_json::from_str(&response_text)
         .map_err(|err| format!("从Json解析SnapshotInfo失败: {}", err))?;
@@ -944,8 +938,10 @@ pub(crate) async fn pay_chapter(
         "chapterId": chapter_id,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
-    let response_text = post_client("/api/user/coinPay", &data, options).await?;
+        .to_string();
+    let response_text = post_client("/api/user/coinPay", &data, options)
+        .await
+        .map_err(|err| format!("用户{}支付失败: {}", user_id, err))?;
     Ok(())
 }
 /**
@@ -1025,7 +1021,7 @@ pub(crate) async fn daily_sign(
         "userId": user_id,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/user/checkSign", &data, options).await?;
     Ok(())
@@ -1115,7 +1111,7 @@ pub(crate) async fn daily_work(
         "taskNo": task_no,
         "timeStamp": timestamp_str()?
     })
-    .to_string();
+        .to_string();
 
     let response_text = post_client("/api/user/getTaskReward", &data, options).await?;
     Ok(())

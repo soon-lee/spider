@@ -438,7 +438,7 @@ pub(crate) fn encrypt_bytes(input: &[u8], key: &str, iv: &str) -> Result<Vec<u8>
     let iv = md5::compute(iv).0;
     aes_enc_cbc(input, key.as_bytes(), &iv, Some("PKCS7")).map_err(|err| format!("AES加密失败：{}", err))
 }
-pub(crate) fn decrypt_bytes(input: &[u8], key: &str, iv: &[u8;16]) -> Result<String, String> {
-    let bytes = aes_dec_cbc(input, key.as_bytes(), iv,Some("PKCS7")).map_err(|err| format!("AES解密失败：{}", err))?;
-    Ok(STANDARD.encode(&bytes))
+pub(crate) fn decrypt_bytes(input: &[u8], key: &str, iv: &str) -> Result<Vec<u8>, String> {
+    let iv = md5::compute(iv).0;
+    aes_dec_cbc(input, key.as_bytes(), &iv, Some("PKCS7")).map_err(|err| format!("AES解密失败：{}", err))
 }
