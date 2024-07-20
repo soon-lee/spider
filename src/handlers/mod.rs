@@ -1,3 +1,3 @@
 pub(crate) mod user;
-mod task;
-mod worker;
+pub(crate) mod task;
+pub(crate) mod worker;

@@ -425,7 +425,7 @@ pub(crate) fn auth_path(path: &str, template: &str, default: &str) -> Result<Str
     let hash = path_hash(path, template, default, &*timestamp_10);
     let path = format!(
         "{}{}cpt_auth={}-{}-0-{}",
-        path.clone(),
+        path,
         concat,
         timestamp_10,
         random_str,

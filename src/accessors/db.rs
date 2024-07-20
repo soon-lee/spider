@@ -1,136 +1,9 @@
 use std::env::var;
 
-use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, MySql, MySqlPool, query, query_as, Row};
+use sqlx::{MySql, MySqlPool, query, query_as, Row};
 use sqlx::mysql::MySqlConnectOptions;
 
-#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
-pub(crate) struct User {
-    pub(crate) id: u64,
-    pub(crate) username: String,
-    pub(crate) password: String,
-    pub(crate) balance: u32,
-}
-impl User {
-    pub(crate) fn new(id: u64, username: String, password: String, balance: u32) -> Self {
-        User {
-            id,
-            username,
-            password,
-            balance,
-        }
-    }
-}
-#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
-pub(crate) struct Task {
-    pub(crate) task_no: u8,
-    pub(crate) give_coin: u8,
-    pub(crate) task_name: String,
-}
-impl Task {
-    pub(crate) fn new(task_no: u8, give_coin: u8, task_name: String) -> Self {
-        Task {
-            task_no,
-            give_coin,
-            task_name,
-        }
-    }
-}
-#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
-pub(crate) struct Category {
-    pub(crate) id: u64,
-    pub(crate) title: String,
-    pub(crate) sort: u32,
-}
-impl Category {
-    pub(crate) fn new(id: u64, title: String, sort: u32) -> Self {
-        Category { id, title, sort }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
-pub(crate) struct Chapter {
-    pub(crate) id: u64,
-    pub(crate) book_id: u64,
-    pub(crate) title: String,
-    pub(crate) pic: String,
-    pub(crate) sort: u32,
-    pub(crate) price: u32,
-    pub(crate) items: Vec<String>,
-}
-impl Chapter {
-    pub(crate) fn new(
-        id: u64,
-        book_id: u64,
-        title: String,
-        pic: String,
-        sort: u32,
-        price: u32,
-        items: Vec<String>,
-    ) -> Self {
-        Chapter {
-            id,
-            book_id,
-            title,
-            pic,
-            sort,
-            price,
-            items,
-        }
-    }
-}
-#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
-pub(crate) struct Book {
-    pub(crate) id: u64,
-    pub(crate) title: String,
-    pub(crate) author: String,
-    pub(crate) note: String,
-    pub(crate) pic: String,
-    pub(crate) big_pic: String,
-    pub(crate) praise_count: u64,
-    pub(crate) click_count: u64,
-    pub(crate) favorite_count: u64,
-    pub(crate) over_type: String,
-    pub(crate) category_id: u64,
-    pub(crate) sort: u32,
-    pub(crate) tags: String,
-    pub(crate) chapters: Vec<Chapter>,
-}
-impl Book {
-    pub(crate) fn new(
-        id: u64,
-        title: String,
-        author: String,
-        note: String,
-        pic: String,
-        big_pic: String,
-        praise_count: u64,
-        click_count: u64,
-        favorite_count: u64,
-        over_type: String,
-        category_id: u64,
-        sort: u32,
-        tags: String,
-        chapters: Vec<Chapter>,
-    ) -> Self {
-        Book {
-            id,
-            title,
-            author,
-            note,
-            pic,
-            big_pic,
-            praise_count,
-            click_count,
-            favorite_count,
-            over_type,
-            category_id,
-            sort,
-            tags,
-            chapters,
-        }
-    }
-}
+use crate::models::entity::{Book, Category, Chapter, Task, User};
 
 pub(crate) struct MySqlClient {
     pool: MySqlPool,
@@ -176,19 +49,19 @@ impl MySqlClient {
     }
     pub(crate) async fn add_user(&self, user: User) -> Result<u64, String> {
         sqlx::query("INSERT INTO `db_spider`.`tb_comic_xxmh_user` (`id`, `username`, `password`, `balance`) VALUES (?, ?, ?, ?)")
-            .bind(user.id)
-            .bind(user.username)
-            .bind(user.password)
-            .bind(user.balance)
+            .bind(user.id())
+            .bind(user.username())
+            .bind(user.password())
+            .bind(user.balance())
             .execute(&self.pool)
             .await
             .map(|res| res.last_insert_id())
-            .map_err(|err| format!("添加用户{}失败:{}", user.id, err))
+            .map_err(|err| format!("添加用户{}失败:{}", user.id(), err))
     }
     pub(crate) async fn add_users(&self, users: Vec<User>) -> Result<u64, String> {
         let values = users
             .iter()
-            .map(|user| format!("({}, {}, {})", user.username, user.password, user.balance))
+            .map(|user| format!("({}, {}, {})", user.username(), user.password(), user.balance()))
             .collect::<Vec<_>>()
             .join(", ");
         query(&format!("INSERT INTO `db_spider`.`tb_comic_xxmh_user` (`id`, `username`, `password`, `balance`) VALUES {}", values)).execute(&self.pool).await.map(|res| res.last_insert_id())
@@ -196,14 +69,14 @@ impl MySqlClient {
     }
     pub(crate) async fn set_user(&self, user: User) -> Result<u64, String> {
         sqlx::query("UPDATE `db_spider`.`tb_comic_xxmh_user` SET `username` = ?, `password` = ?, `balance` = ? WHERE `id` = ?")
-            .bind(user.username)
-            .bind(user.password)
-            .bind(user.balance)
-            .bind(user.id)
+            .bind(user.username())
+            .bind(user.password())
+            .bind(user.balance())
+            .bind(user.id())
             .execute(&self.pool)
             .await
             .map(|res| res.rows_affected())
-            .map_err(|err| format!("更新用户{}失败:{}", user.id, err))
+            .map_err(|err| format!("更新用户{}失败:{}", user.id(), err))
     }
     pub(crate) async fn del_user(&self, id: u64) -> Result<u64, String> {
         sqlx::query("DELETE FROM `db_spider`.`tb_comic_xxmh_user` WHERE `id` = ?")
@@ -280,23 +153,23 @@ impl MySqlClient {
     }
     pub(crate) async fn add_book(&self, book: Book) -> Result<u64, String> {
         sqlx::query("INSERT INTO `db_spider`.`tb_comic_xxmh_book` (`id`, `title`, `author`, `note`, `pic`, `big_pic`, `praise_count`, `click_count`, `favorite_count`, `over_type`, `category_id`, `sort`, `tags`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-            .bind(&book.id)
-            .bind(&book.title)
-            .bind(&book.author)
-            .bind(&book.note)
-            .bind(&book.pic)
-            .bind(&book.big_pic)
-            .bind(&book.praise_count)
-            .bind(&book.click_count)
-            .bind(&book.favorite_count)
-            .bind(&book.over_type)
-            .bind(&book.category_id)
-            .bind(&book.sort)
-            .bind(&book.tags)
+            .bind(&book.id())
+            .bind(&book.title())
+            .bind(&book.author())
+            .bind(&book.note())
+            .bind(&book.pic())
+            .bind(&book.big_pic())
+            .bind(&book.praise_count())
+            .bind(&book.click_count())
+            .bind(&book.favorite_count())
+            .bind(&book.over_type())
+            .bind(&book.category_id())
+            .bind(&book.sort())
+            .bind(&book.tags())
             .execute(&self.pool)
             .await
             .map(|res| res.last_insert_id())
-            .map_err(|err| format!("添加书籍{}失败:{}", book.id, err))
+            .map_err(|err| format!("添加书籍{}失败:{}", book.id(), err))
     }
     pub(crate) async fn add_books(&self, books: Vec<Book>) -> Result<u64, String> {
         let values = books
@@ -304,19 +177,19 @@ impl MySqlClient {
             .map(|book| {
                 format!(
                     "({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})",
-                    book.id,
-                    book.title,
-                    book.author,
-                    book.note,
-                    book.pic,
-                    book.big_pic,
-                    book.praise_count,
-                    book.click_count,
-                    book.favorite_count,
-                    book.over_type,
-                    book.category_id,
-                    book.sort,
-                    book.tags
+                    book.id(),
+                    book.title(),
+                    book.author(),
+                    book.note(),
+                    book.pic(),
+                    book.big_pic(),
+                    book.praise_count(),
+                    book.click_count(),
+                    book.favorite_count(),
+                    book.over_type(),
+                    book.category_id(),
+                    book.sort(),
+                    book.tags()
                 )
             })
             .collect::<Vec<_>>()
@@ -371,17 +244,17 @@ impl MySqlClient {
     }
     pub(crate) async fn add_chapter(&self, chapter: Chapter) -> Result<u64, String> {
         sqlx::query("INSERT INTO `db_spider`.`tb_comic_xxmh_chapter` (`id`,`title`,`pic`,`sort`,`price`,`items`,`book_id`) VALUES (?, ?, ?, ?, ?, ?, ?)")
-            .bind(&chapter.id)
-            .bind(&chapter.title)
-            .bind(&chapter.pic)
-            .bind(&chapter.sort)
-            .bind(&chapter.price)
-            .bind(&chapter.items.join(","))
-            .bind(&chapter.book_id)
+            .bind(&chapter.id())
+            .bind(&chapter.title())
+            .bind(&chapter.pic())
+            .bind(&chapter.sort())
+            .bind(&chapter.price())
+            .bind(&chapter.items().join(","))
+            .bind(&chapter.book_id())
             .execute(&self.pool)
             .await
             .map(|res| res.last_insert_id())
-            .map_err(|err| format!("添加章节{}失败:{}", chapter.id, err))
+            .map_err(|err| format!("添加章节{}失败:{}", chapter.id(), err))
     }
     pub(crate) async fn add_chapters(&self, chapters: Vec<Chapter>) -> Result<u64, String> {
         let values = chapters
@@ -389,13 +262,13 @@ impl MySqlClient {
             .map(|chapter| {
                 format!(
                     "({}, {}, {}, {}, {}, {}, {})",
-                    chapter.id,
-                    chapter.title,
-                    chapter.pic,
-                    chapter.sort,
-                    chapter.price,
-                    chapter.items.join(","),
-                    chapter.book_id
+                    chapter.id(),
+                    chapter.title(),
+                    chapter.pic(),
+                    chapter.sort(),
+                    chapter.price(),
+                    chapter.items().join(","),
+                    chapter.book_id()
                 )
             })
             .collect::<Vec<_>>()

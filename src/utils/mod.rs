@@ -1,3 +1,3 @@
 pub(crate) mod crypt;
 pub(crate) mod datetime;
-mod schedule;
+pub(crate) mod schedule;

@@ -1,2 +1,2 @@
 pub(crate) mod crawl;
-pub(crate) mod day;
+pub(crate) mod work;
