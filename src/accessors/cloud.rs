@@ -1,55 +1,26 @@
-use std::env::var;
 use std::io::Cursor;
-use std::time::Duration;
+use std::sync::Arc;
 
-use qiniu_sdk::credential::Credential;
-use qiniu_sdk::download::{DownloadManager, EndpointsUrlGenerator, UrlsSigner};
-use qiniu_sdk::download::apis::http_client::BucketDomainsQueryer;
-use qiniu_sdk::upload::{AutoUploader, AutoUploaderObjectParams, UploadManager, UploadTokenSigner};
+use qiniu_sdk::download::DownloadManager;
+use qiniu_sdk::upload::{AutoUploader, AutoUploaderObjectParams, UploadManager};
 use serde_json::Value;
 use tokio_util::compat::TokioAsyncReadCompatExt;
 
 use crate::utils::crypt::{decrypt_bytes, encrypt_bytes};
 
 #[derive(Debug)]
-pub(crate) struct QiniuClient {
-    pub(crate) access_key: String,
-    pub(crate) secret_key: String,
-    pub(crate) bucket_name: String,
-    pub(crate) aes_key: String,
-    pub(crate) upload_manager: UploadManager,
-    pub(crate) download_manager: DownloadManager,
+pub(crate) struct CloudAccessor {
+    aes_key: Arc<String>,
+    upload_manager: Arc<UploadManager>,
+    download_manager: Arc<DownloadManager>,
 }
-impl QiniuClient {
-    pub(crate) fn construct() -> Result<Self, String> {
-        let access_key = var("QINIU_ACCESS_KEY").map_err(|_| "缺失环境变量：QINIU_ACCESS_KEY！")?;
-        let secret_key = var("QINIU_SECRET_KEY").map_err(|_| "缺失环境变量：QINIU_SECRET_KEY！")?;
-        let bucket_name =
-            var("QINIU_BUCKET_NAME").map_err(|_| "缺失环境变量：QINIU_BUCKET_NAME！")?;
-        let aes_key = var("QINIU_AES_KEY").map_err(|_| "缺失环境变量：QINIU_AES_KEY！")?;
-        let upload_credential = Credential::new(&access_key, &secret_key);
-        let token_signer = UploadTokenSigner::new_credential_provider(
-            upload_credential,
-            &bucket_name,
-            Duration::from_secs(3600),
-        );
-        let upload_manager = UploadManager::builder(token_signer).build();
-        let query_credential = Credential::new(&access_key, &secret_key);
-        let domain_query = BucketDomainsQueryer::new().query(query_credential, &bucket_name);
-        let url_generator = EndpointsUrlGenerator::builder(domain_query)
-            .use_https(false)
-            .build();
-        let download_credential = Credential::new(&access_key, &secret_key);
-        let url_signer = UrlsSigner::new(download_credential, url_generator);
-        let download_manager = DownloadManager::builder(url_signer).build();
-        Ok(Self {
-            access_key,
-            secret_key,
-            bucket_name,
+impl CloudAccessor {
+    pub(crate) async fn new(aes_key: Arc<String>, upload_manager: Arc<UploadManager>, download_manager: Arc<DownloadManager>) -> Self {
+        CloudAccessor {
             aes_key,
             upload_manager,
             download_manager,
-        })
+        }
     }
     pub(crate) async fn post_bytes(
         &self,

@@ -1,9 +1,10 @@
-use getset::Getters;
+use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Row};
+use sqlx::mysql::MySqlRow;
 
-#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize)]
-#[getset(get = "pub")]
+#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub(crate) struct User {
     id: u64,
     username: String,
@@ -20,8 +21,8 @@ impl User {
         }
     }
 }
-#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize)]
-#[getset(get = "pub")]
+#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub(crate) struct Task {
     task_no: u8,
     give_coin: u8,
@@ -36,8 +37,8 @@ impl Task {
         }
     }
 }
-#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize)]
-#[getset(get = "pub")]
+#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub(crate) struct Category {
     id: u64,
     title: String,
@@ -49,8 +50,8 @@ impl Category {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize)]
-#[getset(get = "pub")]
+#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub(crate) struct Chapter {
     id: u64,
     book_id: u64,
@@ -63,26 +64,42 @@ pub(crate) struct Chapter {
 impl Chapter {
     pub(crate) fn new(
         id: u64,
-        book_id: u64,
         title: String,
         pic: String,
         sort: u32,
         price: u32,
         items: Vec<String>,
+        book_id: u64,
     ) -> Self {
         Chapter {
             id,
-            book_id,
             title,
             pic,
             sort,
             price,
             items,
+            book_id,
         }
     }
+    pub(crate) fn from_row(row: &MySqlRow, offset: usize) -> Self {
+        let items_str: String = row.get(offset + 5);
+        let items: Vec<String> = items_str
+            .split(',')
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>();
+        Chapter::new(
+            row.get::<u64, _>(offset),
+            row.get::<String, _>(offset + 1),
+            row.get::<String, _>(offset + 2),
+            row.get::<u32, _>(offset + 3),
+            row.get::<u32, _>(offset + 4),
+            items,
+            row.get::<u64, _>(offset + 6),
+        )
+    }
 }
-#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize)]
-#[getset(get = "pub")]
+#[derive(Clone, Debug, Deserialize, FromRow, Getters, Serialize, Setters)]
+#[getset(get = "pub", set = "pub")]
 pub(crate) struct Book {
     id: u64,
     title: String,
@@ -132,5 +149,23 @@ impl Book {
             tags,
             chapters,
         }
+    }
+    pub(crate) fn from_row(row: &MySqlRow, offset: usize) -> Self {
+        Book::new(
+            row.get::<u64, _>(offset),
+            row.get::<String, _>(offset + 1),
+            row.get::<String, _>(offset + 2),
+            row.get::<String, _>(offset + 3),
+            row.get::<String, _>(offset + 4),
+            row.get::<String, _>(offset + 5),
+            row.get::<u64, _>(offset + 6),
+            row.get::<u64, _>(offset + 7),
+            row.get::<u64, _>(offset + 8),
+            row.get::<String, _>(offset + 9),
+            row.get::<u64, _>(offset + 10),
+            row.get::<u32, _>(offset + 11),
+            row.get::<String, _>(offset + 12),
+            vec![],
+        )
     }
 }

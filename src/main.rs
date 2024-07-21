@@ -1,7 +1,4 @@
-use crate::accessors::cloud::QiniuClient;
-use crate::accessors::db::MySqlClient;
-use crate::accessors::local::Config;
-use crate::accessors::net::{category_list, comic_info, snapshot_list};
+use std::sync::Arc;
 
 mod handlers;
 mod services;
@@ -12,16 +9,6 @@ mod accessors;
 
 #[tokio::main]
 async fn main() {
-    let config = Config::load().await.unwrap();
-    let options = config.get_options().await.unwrap();
-    let mysql = MySqlClient::new().await.unwrap();
-    let qiniu = QiniuClient::construct().unwrap();
-
-    let categories = category_list(&options).await.unwrap();
-    let snapshots = snapshot_list(categories[0].id(), &3, &10, &options).await.unwrap();
-    let book = comic_info(&snapshots[0].id(), &10, &options).await.unwrap();
-    println!("{:?}", book);
-
     // let app = routes::routes();
     // let host = std::env::var("AXUM_HOST").unwrap_or("0.0.0.0".to_string());
     // let port = std::env::var("AXUM_PORT").unwrap_or("8000".to_string());
@@ -29,4 +16,25 @@ async fn main() {
     //     .await
     //     .unwrap();
     // axum::serve(listener, app).await.unwrap();
+}
+#[tokio::test]
+async fn test_net() {
+    let config = crate::utils::global::Config::load().await.unwrap();
+    let options = config.get_options().await.unwrap();
+    let net_client = crate::utils::global::NetClient::new(options);
+    let user_net_accessor = crate::accessors::net::UserNetAccessor::new(std::sync::Arc::new(net_client));
+    let user = user_net_accessor.user_info(&1809542822452150274u64).await.unwrap();
+    println!("{:?}", user);
+}
+#[tokio::test]
+async fn test_db() {
+    let mysql = crate::utils::global::MySqlClient::new().await.unwrap();
+    let connection = Arc::new(mysql.get_connection().await.unwrap());
+    let user_db_accessor = crate::accessors::db::UserDbAccessor::new(connection.clone());
+    let users = user_db_accessor.get_users().await.unwrap();
+    println!("{:?}", users);
+    let book_db_accessor = crate::accessors::db::BookDbAccessor::new(connection.clone());
+    let books = book_db_accessor.get_books().await.unwrap();
+    let book = book_db_accessor.get_book_by_id(&1982u64).await.unwrap();
+    println!("{:?}", book);
 }
