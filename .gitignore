@@ -1,0 +1,10 @@
+target/
+build/
+out/
+dist/
+
+.idea/
+.vscode/
+.git/
+
+Cargo.lock
