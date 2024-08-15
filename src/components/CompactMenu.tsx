@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ApartmentOutlined, DeploymentUnitOutlined, GoldOutlined, MenuFoldOutlined, MenuUnfoldOutlined, RocketOutlined, UngroupOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 
-const CompactMenu = () => {
-  const [collapse, setCollapse] = useState(false);
+const CompactMenu = ({collapsed,onCollapse}:{collapsed:boolean,onCollapse:()=>any}) => {
+  
   const [items,setItems] = useState([
     { key: 'action', icon: <MenuUnfoldOutlined /> },
     {
@@ -52,23 +52,26 @@ const CompactMenu = () => {
   ]);
   const handleCollapse = (param:any) => {
     if(param.key!=='action') return;
-    setCollapse(!collapse);
+    onCollapse();
+  };
+
+  useEffect(()=>{
     setItems(prev=>{
       return prev.map(item=>{
         if(item.key==='action'){
-          return {...item,icon:collapse?<MenuFoldOutlined />:<MenuUnfoldOutlined />}
+          return {...item,icon:collapsed?<MenuFoldOutlined />:<MenuUnfoldOutlined />}
         }
         return item;
       })
     });
-  };
+  },[collapsed]);
 
   return (
-    <Menu style={{ width: collapse ? '64px' : '200px' }}
+    <Menu
       defaultOpenKeys={['prepare', 'construct', 'running', 'data']}
       mode="inline"
       items={items}
-      inlineCollapsed={collapse}
+      inlineCollapsed={collapsed}
       onClick={handleCollapse}
     />
   );

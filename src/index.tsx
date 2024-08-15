@@ -8,7 +8,13 @@ const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl);
   root.render(
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        components: {
+          Layout: { headerBg: '#ffffff' }
+        }
+      }}>
       <React.StrictMode>
         <App />
       </React.StrictMode>
