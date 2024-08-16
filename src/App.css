@@ -1,16 +1,17 @@
 :root[theme="light"]{
   --color-primary: #fff;
-  --color-text: #000;
-  --color-background: #fff;
-  --color-container: #fff;
-  --color-component: #fff;
+  --color-text: #6d6d6d;
+  --color-background: #dbdbdb;
+  --color-container: #b6b6b6;
+  --color-component: #929292;
 }
+
 :root[theme="dark"]{
   --color-primary: #000;
-  --color-text: #fff;
-  --color-background: #000;
-  --color-container: #000;
-  --color-component: #000;
+  --color-text: #929292;
+  --color-background: #6d6d6d;
+  --color-container: #494949;
+  --color-component: #242424;
 }
 html,body,#root{
   width: 100%;
