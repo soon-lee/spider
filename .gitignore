@@ -1,0 +1,21 @@
+# Local
+.DS_Store
+*.local
+*.log*
+
+# Dist
+node_modules/
+dist/
+build/
+target/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.vscode/
+.git/
+
+package-lock.json
+bun.lock
+
