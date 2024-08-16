@@ -12,5 +12,8 @@ export default defineConfig({
   html:{
     title: '通用爬虫系统',
     favicon: './src/assets/favicon.ico',
+  },output:{
+    distPath:{
+    }
   }
 });

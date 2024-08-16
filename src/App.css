@@ -1,26 +1,22 @@
-body {
+:root[theme="light"]{
+  --color-primary: #fff;
+  --color-text: #000;
+  --color-background: #fff;
+  --color-container: #fff;
+  --color-component: #fff;
+}
+:root[theme="dark"]{
+  --color-primary: #000;
+  --color-text: #fff;
+  --color-background: #000;
+  --color-container: #000;
+  --color-component: #000;
+}
+html,body,#root{
+  width: 100%;
+  height: 100%;
   margin: 0;
-  color: #fff;
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  background-image: linear-gradient(to bottom, #020917, #101725);
-}
-
-.content {
-  display: flex;
-  min-height: 100vh;
-  line-height: 1.1;
-  text-align: center;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.content h1 {
-  font-size: 3.6rem;
-  font-weight: 700;
-}
-
-.content p {
-  font-size: 1.2rem;
-  font-weight: 400;
-  opacity: 0.5;
+  padding: 0;
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
