@@ -17,5 +17,4 @@ target/
 .git/
 
 package-lock.json
-bun.lock
-
+bun.lockb
