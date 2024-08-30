@@ -8,16 +8,16 @@ import {
     RocketOutlined,
     UngroupOutlined
 } from '@ant-design/icons';
-import {Menu} from 'antd';
+import {Menu as AntMenu} from 'antd';
 import {styled} from "styled-components";
 
-const Wrapper = styled(Menu)`
+const Wrapper = styled(AntMenu)`
     ul li {
         padding-left: 24px !important;
     }
 `;
 
-const CompactMenu = ({collapsed, onCollapse}: { collapsed: boolean, onCollapse: () => any }) => {
+const Menu = ({collapsed, onCollapse}: { collapsed: boolean, onCollapse: () => any }) => {
 
     const [items, setItems] = useState([
         {key: 'action', icon: <MenuUnfoldOutlined/>},
@@ -83,4 +83,4 @@ const CompactMenu = ({collapsed, onCollapse}: { collapsed: boolean, onCollapse: 
         />
     );
 }
-export default CompactMenu;
+export default Menu;
