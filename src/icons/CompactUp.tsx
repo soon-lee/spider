@@ -1,10 +1,12 @@
-const CompactUp = (props: { size?: number, color?: string }) => {
+const CompactUp = (props: { size?: number, color?: string, onClick?: () => any }) => {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 16} height={props.size || 16}
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 24 24"
              fill={props.color || "currentColor"}
-             viewBox="0 0 16 16">
-            <path fill-rule="evenodd"
-                  d="M7.776 5.553a.5.5 0 0 1 .448 0l6 3a.5.5 0 1 1-.448.894L8 6.56 2.224 9.447a.5.5 0 1 1-.448-.894l6-3z"/>
+             width={props.size || 24}
+             height={props.size || 24}
+             onClick={props.onClick}>
+            <path d="M3 18h13v-2H3zm0-5h10v-2H3zm0-7v2h13V6zm18 9.59L17.42 12 21 8.41 19.59 7l-5 5 5 5z"></path>
         </svg>
     );
 }

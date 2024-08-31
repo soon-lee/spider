@@ -1,23 +1,38 @@
-:root[theme="light"]{
-  --color-primary: #fff;
-  --color-text: #6d6d6d;
-  --color-background: #dbdbdb;
-  --color-container: #b6b6b6;
-  --color-component: #929292;
+@font-face {
+    font-family: "JetBrains Mono";
+    src: url("assets/fonts/JetBrains Mono/JetBrainsMonoNL-Regular.ttf");
 }
 
-:root[theme="dark"]{
-  --color-primary: #000;
-  --color-text: #929292;
-  --color-background: #6d6d6d;
-  --color-container: #494949;
-  --color-component: #242424;
+@font-face {
+    font-family: "Simsun";
+    src: url("assets/fonts/Simsun/simsun.ttf");
 }
-html,body,#root{
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: var(--color-background);
-  color: var(--color-text);
+
+:root[theme="light"] {
+    --color-primary: #fff;
+    --color-text: #6d6d6d;
+    --color-background: #dbdbdb;
+    --color-container: #b6b6b6;
+    --color-component: #929292;
+}
+
+:root[theme="dark"] {
+    --color-primary: #000;
+    --color-text: #929292;
+    --color-background: #6d6d6d;
+    --color-container: #494949;
+    --color-component: #242424;
+}
+
+:root {
+    font-family: "JetBrains Mono", "Simsun", ui-sans-serif;
+}
+
+html, body, #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-background);
+    color: var(--color-text);
 }
