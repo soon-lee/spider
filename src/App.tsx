@@ -9,6 +9,7 @@ import Popover from "@widgets/Popover.tsx";
 import Tag from "@widgets/Tag.tsx";
 import TextIcon from "@icons/TextIcon.tsx";
 import Mapping from "@components/Mapping.tsx";
+import Input from "@widgets/Input.tsx";
 
 const App = () => {
   const { getTranslation, setLocale, locale } = useLocale();
@@ -118,6 +119,7 @@ const App = () => {
                   hdfihsdi
                 </Tag>
                 <Mapping />
+                <Input label={"test"} />
               </div>
             )}
           />

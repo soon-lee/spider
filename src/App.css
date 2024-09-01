@@ -1,4 +1,9 @@
 @font-face {
+    font-family: "Noto Sans CJK SC";
+    src: url("assets/fonts/Noto Sans SC/NotoSansSC.ttf");
+}
+
+@font-face {
     font-family: "JetBrains Mono";
     src: url("assets/fonts/JetBrains Mono/JetBrainsMonoNL-Regular.ttf");
 }
@@ -25,7 +30,7 @@
 }
 
 :root {
-    font-family: "JetBrains Mono", "Simsun", ui-sans-serif;
+    font-family: "JetBrains Mono", "Noto Sans CJK SC", ui-sans-serif;
 }
 
 html, body, #root {
