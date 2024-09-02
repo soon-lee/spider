@@ -1,4 +1,4 @@
-const CompactDown = (props: {
+const IconPlus = (props: {
   size?: number;
   color?: string;
   onClick?: () => any;
@@ -6,14 +6,15 @@ const CompactDown = (props: {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 16 16"
+      viewBox="64 64 896 896"
       fill={props.color || "currentColor"}
       width={props.size || 24}
       height={props.size || 24}
       onClick={props.onClick}
     >
-      <path d="M1.553 6.776a.5.5 0 0 1 .67-.223L8 9.44l5.776-2.888a.5.5 0 1 1 .448.894l-6 3a.5.5 0 0 1-.448 0l-6-3a.5.5 0 0 1-.223-.67z" />
+      <path d="M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z"></path>
+      <path d="M192 474h672q8 0 8 8v60q0 8-8 8H160q-8 0-8-8v-60q0-8 8-8z"></path>
     </svg>
   );
 };
-export default CompactDown;
+export default IconPlus;

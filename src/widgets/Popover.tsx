@@ -8,6 +8,10 @@ interface PopoverProps {
 }
 
 const Wrapper = styled.div<{ position?: string }>`
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: center;
   position: relative;
   cursor: pointer;
 
@@ -136,6 +140,10 @@ const Popup = styled.div`
 const Content = styled.div`
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: center;
 `;
 const Popover = (props: PopoverProps) => {
   return (

@@ -1,19 +1,14 @@
 import { styled } from "solid-styled-components";
-import TextIcon from "@icons/TextIcon.tsx";
-import { JSXElement } from "solid-js";
+import IconClear from "@icons/IconClear.tsx";
+import Popover from "@widgets/Popover.tsx";
 
 interface InputProps {
-  icon?: JSXElement;
-  label?: string;
+  label: string;
+  requirements?: string;
   placeholder?: string;
-  action?: JSXElement;
-  validator?: (value: string) => boolean;
-  tooltip?: {
-    success?: string;
-    failure?: string;
-  };
-  width?: string;
   regex?: string;
+  onAction?: () => any;
+  width?: string;
 }
 
 const Wrapper = styled.div<{ width: string }>`
@@ -29,6 +24,7 @@ const Wrapper = styled.div<{ width: string }>`
     padding: 5px;
     border-radius: 4px;
     font-size: 16px;
+    text-indent: 5px;
     outline: none;
     border-style: solid;
   }
@@ -60,27 +56,21 @@ const Wrapper = styled.div<{ width: string }>`
   position: relative;
 
   > svg {
+    right: 5px;
     position: absolute;
-    right: 0;
   }
-`;
-const LabelWrapper = styled.label`
-  flex-grow: 1;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 5px;
 `;
 const Input = (props: InputProps) => {
   return (
     <Wrapper width={props.width || "100px"}>
-      <LabelWrapper>
-        <TextIcon text={"x"} />
+      <Popover content={props.requirements || props.label}>
         <span>{props.label}:</span>
-      </LabelWrapper>
-      <input pattern={props.regex || "^.*$"} />
-      <TextIcon text={"x"} />
+      </Popover>
+      <input
+        placeholder={props.placeholder || props.label}
+        pattern={props.regex || "^.*$"}
+      />
+      <IconClear size={16} onClick={props.onAction} />
     </Wrapper>
   );
 };

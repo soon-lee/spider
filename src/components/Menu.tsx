@@ -1,11 +1,11 @@
 import { createEffect, createSignal, For, JSXElement } from "solid-js";
 import { styled } from "solid-styled-components";
 import TextIcon from "@icons/TextIcon.tsx";
-import Plus from "@icons/Plus.tsx";
-import CollapseDown from "@icons/CollapseDown.tsx";
-import CollapseUp from "@icons/CollapseUp.tsx";
-import CompactDown from "@icons/CompactDown.tsx";
-import CompactUp from "@icons/CompactUp.tsx";
+import IconPlus from "@icons/IconPlus.tsx";
+import CollapseDown from "@icons/IconCollapseDown.tsx";
+import CollapseUp from "@icons/IconCollapseUp.tsx";
+import IconCompactDown from "@icons/IconCompactDown.tsx";
+import IconCompactUp from "@icons/IconCompactUp.tsx";
 import Popover from "@widgets/Popover.tsx";
 
 interface MenuItemProps {
@@ -107,7 +107,7 @@ const MenuItem = (props: MenuItemProps) => {
     <MenuItemWrapper>
       {props.icon || <TextIcon text={props.name} />}
       {props.compacted ? <></> : <span>{props.label}</span>}
-      {props.compacted ? <></> : props.action || <Plus size={16} />}
+      {props.compacted ? <></> : props.action || <IconPlus size={16} />}
     </MenuItemWrapper>
   );
 };
@@ -166,11 +166,11 @@ const Menu = (props: MenuProps) => {
       <MenuBar>
         {compacted() ? (
           <Popover content={"点击展开菜单"} position="top-right">
-            <CompactDown onClick={handleCompact} />
+            <IconCompactDown onClick={handleCompact} />
           </Popover>
         ) : (
           <Popover content={"点击折叠菜单"}>
-            <CompactUp onClick={handleCompact} />
+            <IconCompactUp onClick={handleCompact} />
           </Popover>
         )}
         {compacted() ? <></> : props.title || ""}

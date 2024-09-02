@@ -1,7 +1,13 @@
 import { styled } from "solid-styled-components";
-import TextIcon from "@icons/TextIcon.tsx";
-import Tag from "@widgets/Tag.tsx";
-import { createSignal } from "solid-js";
+import { createSignal, For } from "solid-js";
+import Select from "@widgets/Select.tsx";
+import Input from "@widgets/Input.tsx";
+import IconSave from "@icons/IconSave.tsx";
+import Button from "@widgets/Button.tsx";
+import Information from "@widgets/Information.tsx";
+import IconEdit from "@icons/IconEdit.tsx";
+import IconPlus from "@icons/IconPlus.tsx";
+import IconMapping from "@icons/IconMapping.tsx";
 
 interface MappingViewProps {
   field: string;
@@ -32,24 +38,17 @@ const JieWrapper = styled.li<{ percent: number }>`
 const MappingView = (props: MappingViewProps) => {
   return (
     <ZhuWrapper>
-      <JieWrapper percent={5}>
-        <TextIcon text={"M"} />
-      </JieWrapper>
-      <JieWrapper percent={10}>
-        <Tag>{props.field}</Tag>
-      </JieWrapper>
-      <JieWrapper percent={50}>
-        <Tag>{props.expression}</Tag>
-      </JieWrapper>
-      <JieWrapper percent={10}>
-        <Tag>{props.operator}</Tag>
-      </JieWrapper>
-      <JieWrapper percent={20}>
-        <Tag>{props.regex}</Tag>
-      </JieWrapper>
-      <JieWrapper percent={5}>
-        <TextIcon text={"E"} onClick={props.onEdit} />
-      </JieWrapper>
+      <IconMapping size={16} />
+      <Information label={"字段"} value={"test"} />
+      <Information label={"表达式"} value={"test"} />
+      <Information label={"选择器"} value={"test"} />
+      <Information label={"操作符"} value={"test"} />
+      <Information label={"正则表达式"} value={"test"} />
+      <Button
+        label={"编辑"}
+        onClick={props.onEdit}
+        icon={<IconEdit size={16} />}
+      />
     </ZhuWrapper>
   );
 };
@@ -62,21 +61,27 @@ const MappingForm = (props: MappingFormProps) => {
   return (
     <form>
       <ZhuWrapper>
-        <JieWrapper percent={10}>
-          <input />
-        </JieWrapper>
-        <JieWrapper percent={50}>
-          <input />
-        </JieWrapper>
-        <JieWrapper percent={10}>
-          <input />
-        </JieWrapper>
-        <JieWrapper percent={20}>
-          <input />
-        </JieWrapper>
-        <JieWrapper percent={5}>
-          <TextIcon text={"C"} onClick={props.onSave} />
-        </JieWrapper>
+        <IconMapping size={16} />
+        <Input label={"字段"} placeholder={"字段"} />
+        <Input label={"表达式"} placeholder={"表达式"} />
+        <Select
+          label={"选择器"}
+          options={[
+            { label: "CSS", value: "css" },
+            { label: "XPATH", value: "xpath" },
+            {
+              label: "JSON",
+              value: "json",
+            },
+          ]}
+        />
+        <Input label={"操作符"} placeholder={"操作符"} />
+        <Input label={"正则表达式"} placeholder={"正则表达式"} />
+        <Button
+          label={"保存"}
+          onClick={props.onSave}
+          icon={<IconSave size={16} />}
+        />
       </ZhuWrapper>
     </form>
   );
@@ -84,20 +89,35 @@ const MappingForm = (props: MappingFormProps) => {
 const Wrapper = styled.div``;
 const Mapping = () => {
   const [edited, setEdited] = createSignal<boolean>(false);
+  const [data, setData] = createSignal<any[]>([
+    { edited: false },
+    { edited: true },
+    { edited: false },
+  ]);
   return (
     <Wrapper>
-      {edited() ? (
-        <MappingView
-          field={"test"}
-          expression={"html div.pb pic#person"}
-          operator={"@src"}
-          regex={" "}
-          onEdit={() => setEdited(false)}
-        />
-      ) : (
-        <MappingForm onSave={() => setEdited(true)} />
-      )}
-      <TextIcon text={"+"} />
+      <For each={data()}>
+        {(item) =>
+          item.edited ? (
+            <MappingView
+              field={"test"}
+              expression={"html div.pb pic#person"}
+              operator={"@src"}
+              regex={" "}
+              onEdit={() => setEdited(false)}
+            />
+          ) : (
+            <MappingForm onSave={() => setEdited(true)} />
+          )
+        }
+      </For>
+      <Button
+        icon={<IconPlus size={16} />}
+        label={"添加映射"}
+        onClick={() => {
+          setData([...data(), { edited: false }]);
+        }}
+      />
     </Wrapper>
   );
 };
