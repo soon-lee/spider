@@ -1,19 +1,24 @@
 import { styled } from "solid-styled-components";
-import { createSignal, For } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import Select from "@widgets/Select.tsx";
 import Input from "@widgets/Input.tsx";
-import IconSave from "@icons/IconSave.tsx";
 import Button from "@widgets/Button.tsx";
 import Information from "@widgets/Information.tsx";
 import IconEdit from "@icons/IconEdit.tsx";
-import IconPlus from "@icons/IconPlus.tsx";
 import IconMapping from "@icons/IconMapping.tsx";
+import IconSave from "@icons/IconSave.tsx";
+import IconPlus from "@icons/IconPlus.tsx";
 
-interface MappingViewProps {
+interface MappingData {
   field: string;
+  selector: string;
   expression: string;
   operator: string;
-  regex?: string;
+  regex: string;
+}
+
+interface MappingViewProps {
+  data: MappingData;
   onEdit?: () => any;
 }
 
@@ -39,11 +44,11 @@ const MappingView = (props: MappingViewProps) => {
   return (
     <ZhuWrapper>
       <IconMapping size={16} />
-      <Information label={"字段"} value={"test"} />
-      <Information label={"表达式"} value={"test"} />
-      <Information label={"选择器"} value={"test"} />
-      <Information label={"操作符"} value={"test"} />
-      <Information label={"正则表达式"} value={"test"} />
+      <Information label={"字段"} value={props.data.field} />
+      <Information label={"表达式"} value={props.data.expression} />
+      <Information label={"选择器"} value={props.data.selector} />
+      <Information label={"操作符"} value={props.data.operator} />
+      <Information label={"正则表达式"} value={props.data.regex} />
       <Button
         label={"编辑"}
         onClick={props.onEdit}
@@ -54,6 +59,7 @@ const MappingView = (props: MappingViewProps) => {
 };
 
 interface MappingFormProps {
+  data: MappingData;
   onSave?: () => any;
 }
 
@@ -62,9 +68,14 @@ const MappingForm = (props: MappingFormProps) => {
     <form>
       <ZhuWrapper>
         <IconMapping size={16} />
-        <Input label={"字段"} placeholder={"字段"} />
-        <Input label={"表达式"} placeholder={"表达式"} />
+        <Input value={props.data.field} label={"字段"} placeholder={"字段"} />
+        <Input
+          value={props.data.expression}
+          label={"表达式"}
+          placeholder={"表达式"}
+        />
         <Select
+          value={props.data.selector}
           label={"选择器"}
           options={[
             { label: "CSS", value: "css" },
@@ -75,8 +86,16 @@ const MappingForm = (props: MappingFormProps) => {
             },
           ]}
         />
-        <Input label={"操作符"} placeholder={"操作符"} />
-        <Input label={"正则表达式"} placeholder={"正则表达式"} />
+        <Input
+          value={props.data.operator}
+          label={"操作符"}
+          placeholder={"操作符"}
+        />
+        <Input
+          value={props.data.regex}
+          label={"正则表达式"}
+          placeholder={"正则表达式"}
+        />
         <Button
           label={"保存"}
           onClick={props.onSave}
@@ -86,38 +105,48 @@ const MappingForm = (props: MappingFormProps) => {
     </form>
   );
 };
-const Wrapper = styled.div``;
-const Mapping = () => {
-  const [edited, setEdited] = createSignal<boolean>(false);
-  const [data, setData] = createSignal<any[]>([
-    { edited: false },
-    { edited: true },
-    { edited: false },
-  ]);
+const Wrapper = styled.div`
+  button {
+    display: inline-flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+`;
+
+interface MappingProps {
+  data: MappingData[];
+  editedIndex: Array<number>;
+}
+
+const Mapping = (props: MappingProps) => {
+  const [data, setData] = createSignal(props.data);
+  const [editedIndex, setEditedIndex] = createSignal<number[]>(
+    props.editedIndex,
+  );
+  createEffect(() => console.log(editedIndex()));
   return (
     <Wrapper>
-      <For each={data()}>
-        {(item) =>
-          item.edited ? (
-            <MappingView
-              field={"test"}
-              expression={"html div.pb pic#person"}
-              operator={"@src"}
-              regex={" "}
-              onEdit={() => setEdited(false)}
-            />
-          ) : (
-            <MappingForm onSave={() => setEdited(true)} />
-          )
-        }
-      </For>
-      <Button
-        icon={<IconPlus size={16} />}
-        label={"添加映射"}
-        onClick={() => {
-          setData([...data(), { edited: false }]);
-        }}
-      />
+      {data().map((item, index) =>
+        editedIndex().includes(index) ? (
+          <MappingView
+            data={item}
+            onEdit={() =>
+              setEditedIndex((prev) => prev.filter((_, i) => i !== index))
+            }
+          />
+        ) : (
+          <MappingForm
+            data={item}
+            onSave={() => setEditedIndex((prev) => [...prev, index])}
+          />
+        ),
+      )}
+      <button>
+        <IconPlus size={16} />
+        <span style={{ "margin-left": "5px" }}>添加</span>
+        <IconMapping size={16} />
+      </button>
     </Wrapper>
   );
 };

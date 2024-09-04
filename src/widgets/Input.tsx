@@ -4,6 +4,7 @@ import Popover from "@widgets/Popover.tsx";
 
 interface InputProps {
   label: string;
+  value: string;
   requirements?: string;
   placeholder?: string;
   regex?: string;
@@ -67,6 +68,7 @@ const Input = (props: InputProps) => {
         <span>{props.label}:</span>
       </Popover>
       <input
+        value={props.value}
         placeholder={props.placeholder || props.label}
         pattern={props.regex || "^.*$"}
       />

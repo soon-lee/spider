@@ -9,6 +9,7 @@ interface SelectOption {
 
 interface SelectProps {
   label: string;
+  value: string;
   requirements?: string;
   options: SelectOption[];
   onChange?: (value: string) => any;
@@ -47,7 +48,10 @@ const Select = (props: SelectProps) => {
       <Popover content={props.requirements || props.label}>
         <span>{props.label}:</span>
       </Popover>
-      <select onChange={(e) => props.onChange?.(e.target.value)}>
+      <select
+        value={props.value}
+        onChange={(e) => props.onChange?.(e.target.value)}
+      >
         <For each={props.options}>
           {(option) => <option value={option.value}>{option.label}</option>}
         </For>

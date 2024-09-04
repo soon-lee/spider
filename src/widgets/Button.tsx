@@ -18,7 +18,7 @@ const Wrapper = styled.button`
 `;
 const Button = (props: ButtonProps) => {
   return (
-    <Wrapper onClick={props.onClick}>
+    <Wrapper type="button" onClick={props.onClick}>
       {props.icon || <TextIcon text={props.label} />}
       {props.label}
     </Wrapper>

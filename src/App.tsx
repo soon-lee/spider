@@ -9,7 +9,8 @@ import Popover from "@widgets/Popover.tsx";
 import Tag from "@widgets/Tag.tsx";
 import TextIcon from "@icons/TextIcon.tsx";
 import Mapping from "@components/Mapping.tsx";
-import Input from "@widgets/Input.tsx";
+import CollapsePane from "@containers/CollapsePane.tsx";
+import Mapper from "@components/Mapper.tsx";
 
 const App = () => {
   const { getTranslation, setLocale, locale } = useLocale();
@@ -118,8 +119,50 @@ const App = () => {
                   <TextIcon text={"hdfihsdi"} width={16} height={16} />
                   hdfihsdi
                 </Tag>
-                <Mapping />
-                <Input label={"test"} />
+                <Mapping
+                  data={[
+                    {
+                      field: "field1",
+                      selector: "css",
+                      expression: "html div",
+                      operator: "text",
+                      regex: "d+",
+                    },
+                    {
+                      field: "field2",
+                      selector: "css",
+                      expression: "html div",
+                      operator: "text",
+                      regex: "d+",
+                    },
+                    {
+                      field: "field3",
+                      selector: "css",
+                      expression: "html div",
+                      operator: "text",
+                      regex: "d+",
+                    },
+                    {
+                      field: "field4",
+                      selector: "css",
+                      expression: "html div",
+                      operator: "text",
+                      regex: "d+",
+                    },
+                    {
+                      field: "field5",
+                      selector: "css",
+                      expression: "html div",
+                      operator: "text",
+                      regex: "d+",
+                    },
+                  ]}
+                  editedIndex={[1, 3]}
+                />
+                <CollapsePane>
+                  <div>123</div>
+                </CollapsePane>
+                <Mapper />
               </div>
             )}
           />
