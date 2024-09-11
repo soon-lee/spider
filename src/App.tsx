@@ -9,8 +9,8 @@ import Popover from "@widgets/Popover.tsx";
 import Tag from "@widgets/Tag.tsx";
 import TextIcon from "@icons/TextIcon.tsx";
 import Mapping from "@components/Mapping.tsx";
-import CollapsePane from "@containers/CollapsePane.tsx";
-import Mapper from "@components/Mapper.tsx";
+import MappingPane from "@components/MappingPane.tsx";
+import MapperPane from "@components/MapperPane.tsx";
 
 const App = () => {
   const { getTranslation, setLocale, locale } = useLocale();
@@ -128,41 +128,21 @@ const App = () => {
                       operator: "text",
                       regex: "d+",
                     },
-                    {
-                      field: "field2",
-                      selector: "css",
-                      expression: "html div",
-                      operator: "text",
-                      regex: "d+",
-                    },
-                    {
-                      field: "field3",
-                      selector: "css",
-                      expression: "html div",
-                      operator: "text",
-                      regex: "d+",
-                    },
-                    {
-                      field: "field4",
-                      selector: "css",
-                      expression: "html div",
-                      operator: "text",
-                      regex: "d+",
-                    },
-                    {
-                      field: "field5",
-                      selector: "css",
-                      expression: "html div",
-                      operator: "text",
-                      regex: "d+",
-                    },
                   ]}
-                  editedIndex={[1, 3]}
+                  editedIndex={[1]}
                 />
-                <CollapsePane>
-                  <div>123</div>
-                </CollapsePane>
-                <Mapper />
+                <MappingPane
+                  field={"count"}
+                  expression={"html a span"}
+                  operation={"count"}
+                  regex={""}
+                />
+                <MapperPane
+                  field={"site"}
+                  expression={"html body div"}
+                  sequential={false}
+                  mappings={["index", "cover"]}
+                />
               </div>
             )}
           />

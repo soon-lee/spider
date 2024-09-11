@@ -56,7 +56,14 @@ const Wrapper = styled.div<{ width: string }>`
 
   position: relative;
 
+  &:hover {
+    > svg {
+      display: block;
+    }
+  }
+
   > svg {
+    display: none;
     right: 5px;
     position: absolute;
   }

@@ -31,7 +31,7 @@ const Header = styled.div<{ collapsed: boolean }>`
   }
 `;
 const Content = styled.div`
-  padding: 5px;
+  padding: 5px 5px 5px 36px;
   width: calc(100% - 10px);
   flex-grow: 1;
 `;
