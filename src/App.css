@@ -41,3 +41,12 @@ html, body, #root {
     background-color: var(--color-background);
     color: var(--color-text);
 }
+
+dialog.uxy-ui-context-dialog {
+    width: 400px;
+    height: 300px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}

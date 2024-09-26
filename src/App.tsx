@@ -4,18 +4,27 @@ import { useLocale } from "@contexts/LocaleProvider";
 import JuLayout from "@containers/JuLayout";
 import { Route, Router } from "@solidjs/router";
 import Menu from "@components/Menu.tsx";
-import { createSignal } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import Popover from "@widgets/Popover.tsx";
 import Tag from "@widgets/Tag.tsx";
 import TextIcon from "@icons/TextIcon.tsx";
 import Mapping from "@components/Mapping.tsx";
 import MappingPane from "@components/MappingPane.tsx";
 import MapperPane from "@components/MapperPane.tsx";
+import { IconText } from "@uxy-ui/icons";
+import { useDialog } from "@uxy-ui/contexts";
 
 const App = () => {
   const { getTranslation, setLocale, locale } = useLocale();
   const { setTheme, theme } = useTheme();
   const [asideWidth, setAsideWidth] = createSignal<string>("200px");
+
+  const { setShow, setContent } = useDialog();
+
+  createEffect(() => {
+    setShow(true);
+    setContent("test");
+  });
 
   return (
     <JuLayout
@@ -31,6 +40,14 @@ const App = () => {
             onClick={() => setTheme(theme() === "light" ? "dark" : "light")}
           >
             {theme() === "light" ? "dark" : "light"}
+          </button>
+          <button
+            onClick={() => {
+              setShow(true);
+              setContent("test");
+            }}
+          >
+            show dialog
           </button>
         </div>
       }
@@ -143,6 +160,8 @@ const App = () => {
                   sequential={false}
                   mappings={["index", "cover"]}
                 />
+                <IconText text={""} />
+                <IconText text={"hello world"} />
               </div>
             )}
           />

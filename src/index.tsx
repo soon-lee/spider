@@ -1,11 +1,18 @@
-import { render } from 'solid-js/web';
-import App from './App';
-import GlobalProvider from '@contexts/GlobalProvider';
+import { render } from "solid-js/web";
+import App from "./App";
+import GlobalProvider from "@contexts/GlobalProvider";
+import { DialogProvider } from "@uxy-ui/contexts";
 
-const root = document.getElementById('root');
+const root = document.getElementById("root");
 if (root) {
-  render(() => 
-    <GlobalProvider>
-      <App />
-    </GlobalProvider>, root);
+  render(
+    () => (
+      <GlobalProvider>
+        <DialogProvider>
+          <App />
+        </DialogProvider>
+      </GlobalProvider>
+    ),
+    root,
+  );
 }
