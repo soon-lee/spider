@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@solidjs/router": "^0.14.3",
-    "@uxy-ui/contexts": "^1.0.11",
+    "@uxy-ui/contexts": "^1.0.14",
     "@uxy-ui/icons": "^1.1.18",
     "solid-js": "^1.8.20"
   },

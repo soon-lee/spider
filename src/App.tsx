@@ -21,10 +21,7 @@ const App = () => {
 
   const { setShow, setContent } = useDialog();
 
-  createEffect(() => {
-    setShow(true);
-    setContent("test");
-  });
+  createEffect(() => {});
 
   return (
     <JuLayout
@@ -48,6 +45,13 @@ const App = () => {
             }}
           >
             show dialog
+          </button>
+          <button
+            onClick={() => {
+              setShow(false);
+            }}
+          >
+            hidden dialog
           </button>
         </div>
       }
