@@ -2,27 +2,36 @@ use getset::Getters;
 use reqwest::header::{HeaderMap, HeaderName};
 use reqwest::{Client, RequestBuilder};
 use scraper::{ElementRef, Html, Selector};
+use serde::Deserialize;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
-use std::sync::Arc;
 
-#[derive(Debug, Getters)]
+#[derive(Debug, Deserialize, Getters)]
 #[getset(get = "pub(crate)")]
 pub(crate) struct Mapping {
+    key: String,
+    name: String,
     field: String,
+    sequential: bool,
     expression: String,
     operation: String,
     regexp: Option<String>,
 }
 impl Mapping {
     pub(crate) fn new(
+        key: String,
+        name: String,
         field: String,
+        sequential: bool,
         expression: String,
         operation: String,
         regexp: Option<String>,
     ) -> Self {
         Mapping {
+            key,
+            name,
             field,
+            sequential,
             expression,
             operation,
             regexp,
@@ -39,188 +48,119 @@ impl Mapping {
             None => {}
         }
     }
-    pub(crate) fn deal_css(&self, element: ElementRef) -> Result<(String, String), String> {
+    fn deal_operation(&self, element: &ElementRef) -> Result<String, String> {
         match self.operation.as_str() {
             "text" => {
-                let selector = Selector::parse(&self.expression)
-                    .map_err(|err| format!("解析CSS表达式失败：{}", err))?;
-                let text_ref = element
-                    .select(&selector)
-                    .next()
-                    .ok_or(format!("获取元素失败：{}", self.expression))?;
-                let text = text_ref.text().collect::<String>();
-                Ok((self.field.clone(), text))
+                let text = element.text().collect::<String>();
+                Ok(text)
             }
             _ => {
-                let selector = Selector::parse(&self.expression)
-                    .map_err(|err| format!("解析CSS表达式失败：{}", err))?;
-                let text_ref = element
-                    .select(&selector)
-                    .next()
-                    .ok_or(format!("获取元素失败：{}", self.expression))?;
                 let action = self.operation.replace("@", "");
-                let text = text_ref
+                let text = element
                     .attr(action.as_str())
                     .ok_or(format!("获取属性失败：{}", action))?;
-                Ok((self.field.clone(), text.to_string()))
+                Ok(text.to_string())
             }
         }
     }
-    pub(crate) fn deal_json(&self, value: Value) {}
-    pub(crate) fn deal_xpath(&self) {}
+    pub(crate) fn deal_css(&self, element: ElementRef) -> Result<(String, String), String> {
+        let selector = Selector::parse(&self.expression)
+            .map_err(|err| format!("解析CSS表达式失败：{}", err))?;
+        match self.sequential {
+            true => {
+                let text_refs = element.select(&selector).collect::<Vec<_>>();
+                let mut text_items = Vec::<String>::new();
+                for text_ref in text_refs {
+                    let text = self.deal_operation(&text_ref)?;
+                    text_items.push(text);
+                }
+                Ok((self.field.clone(), text_items.join(",")))
+            }
+            false => {
+                let text_ref = element
+                    .select(&selector)
+                    .next()
+                    .ok_or(format!("获取元素失败：{}", self.expression))?;
+                let text = self.deal_operation(&text_ref)?;
+                Ok((self.field.clone(), text))
+            }
+        }
+    }
 }
-#[derive(Debug, Getters)]
+#[derive(Debug, Deserialize, Getters)]
 #[getset(get = "pub(crate)")]
 pub(crate) struct Mapper {
+    key: String,
+    name: String,
     field: String,
     expression: String,
-    sequential: bool,
-    mapping: Option<Vec<Mapping>>,
-    children: Option<Vec<Mapper>>,
+    mappings: Option<Vec<Mapping>>,
 }
 impl Mapper {
     pub(crate) fn new(
+        key: String,
+        name: String,
         field: String,
         expression: String,
-        sequential: bool,
-        mapping: Option<Vec<Mapping>>,
-        children: Option<Vec<Mapper>>,
+        mappings: Option<Vec<Mapping>>,
     ) -> Self {
         Mapper {
+            key,
+            name,
             field,
             expression,
-            sequential,
-            mapping,
-            children,
+            mappings,
         }
     }
-    pub(crate) fn deal_css(&self, element: ElementRef) -> Result<Value, String> {
+    pub(crate) fn deal_css(&self, element: Html) -> Result<Value, String> {
         let selector = Selector::parse(&self.expression)
             .map_err(|err| format!("解析CSS表达式失败：{}", err))?;
         let fragment = element
             .select(&selector)
             .next()
             .ok_or(format!("获取元素失败：{}", self.expression))?;
-        match self.sequential {
-            true => {
-                let series = fragment
-                    .child_elements()
-                    .map(|child_element| {
-                        let mut item_fields = Map::<String, Value>::new();
-                        match &self.mapping {
-                            Some(mappings) => {
-                                for mapping in mappings {
-                                    let (field, value) = mapping.deal_css(child_element)?;
-                                    item_fields.insert(field, Value::String(value));
-                                }
-                            }
-                            None => {}
-                        };
-                        match &self.children {
-                            Some(children) => {
-                                for child in children {
-                                    let child_fields = child.deal_css(child_element)?;
-                                    item_fields.insert(child.field.clone(), child_fields);
-                                }
-                            }
-                            None => {}
-                        };
-                        Ok(Value::Object(item_fields))
-                    })
-                    .collect::<Result<Vec<Value>, String>>()?;
-                Ok(Value::Array(series))
-            }
-            false => {
-                let mut fields = Map::<String, Value>::new();
-                match &self.mapping {
-                    Some(mappings) => {
-                        for mapping in mappings {
-                            let (field, value) = mapping.deal_css(fragment)?;
-                            fields.insert(field, Value::String(value));
-                        }
-                    }
-                    None => {}
-                };
-                match &self.children {
-                    Some(children) => {
-                        for child in children {
-                            let child_fields = child.deal_css(fragment)?;
-                            fields.insert(child.field.clone(), child_fields);
-                        }
-                    }
-                    None => {}
-                }
-                Ok(Value::Object(fields))
+        let mut fields = Map::<String, Value>::new();
+        if let Some(mappings) = &self.mappings {
+            for mapping in mappings {
+                let (field, value) = mapping.deal_css(fragment)?;
+                fields.insert(field, Value::String(value));
             }
         }
+        Ok(Value::Object(fields))
     }
-    pub(crate) fn deal_json(&self, element: Value) {}
-    pub(crate) fn deal_xpath(&self) {}
 }
-#[derive(Debug, Getters)]
+#[derive(Debug, Deserialize, Getters)]
 #[getset(get = "pub(crate)")]
 pub(crate) struct Extractor {
-    field: String,
-    parser: String,
-    mappers: Vec<Mapper>,
+    key: String,
+    name: String,
+    urls: Vec<String>,
+    mapper: Mapper,
+    headers: Option<HashMap<String, String>>,
+    bodies: Option<HashMap<String, String>>,
+    method: String,
 }
 impl Extractor {
-    pub(crate) fn new(field: String, parser: String, mappers: Vec<Mapper>) -> Self {
-        Extractor {
-            field,
-            parser,
-            mappers,
-        }
-    }
-    pub(crate) fn extract(&self, text: &String) -> Result<Value, String> {
-        match self.parser.as_str() {
-            "CSS" => {
-                let fragment = Html::parse_document(&text);
-                let mut fields = Map::<String, Value>::new();
-                for mapper in &self.mappers {
-                    let value = mapper.deal_css(fragment.root_element())?;
-                    fields.insert(mapper.field.clone(), value);
-                }
-                Ok(Value::Object(fields))
-            }
-            "JSON" => Ok(Value::Null),
-            "XPATH" => Ok(Value::Null),
-            _ => Err("解析器类型错误".to_string()),
-        }
-    }
-}
-#[derive(Debug, Getters)]
-#[getset(get = "pub(crate)")]
-pub(crate) struct Action {
-    method: String,
-    path: String,
-    headers: Option<HashMap<String, String>>,
-    path_params: Option<HashMap<String, String>>,
-    query_params: Option<HashMap<String, String>>,
-    body_params: Option<HashMap<String, String>>,
-    extractor: Arc<Extractor>,
-}
-impl Action {
     pub(crate) fn new(
-        method: String,
-        path: String,
-        path_params: Option<HashMap<String, String>>,
-        query_params: Option<HashMap<String, String>>,
-        body_params: Option<HashMap<String, String>>,
+        key: String,
+        name: String,
+        urls: Vec<String>,
+        mapper: Mapper,
         headers: Option<HashMap<String, String>>,
-        extractor: Arc<Extractor>,
+        bodies: Option<HashMap<String, String>>,
+        method: String,
     ) -> Self {
-        Action {
-            method,
-            path,
-            path_params,
-            query_params,
-            body_params,
+        Extractor {
+            key,
+            name,
+            urls,
+            mapper,
             headers,
-            extractor,
+            bodies,
+            method,
         }
     }
-    pub(crate) fn deal_headers(&self, request_builder: RequestBuilder) -> RequestBuilder {
+    fn deal_headers(&self, request_builder: RequestBuilder) -> RequestBuilder {
         match &self.headers {
             Some(headers) => {
                 let mut header_map = HeaderMap::new();
@@ -232,31 +172,8 @@ impl Action {
             None => request_builder,
         }
     }
-    pub(crate) fn url(&self) -> String {
-        let mut url = self.path.clone();
-        url = match &self.path_params {
-            Some(path_params) => {
-                for (key, value) in path_params {
-                    url = url.replace(format!("@{}", key).as_str(), value);
-                }
-                url
-            }
-            None => url,
-        };
-        match &self.query_params {
-            Some(query_params) => {
-                let query = query_params
-                    .iter()
-                    .map(|(key, value)| format!("{}={}", key, value))
-                    .collect::<Vec<String>>()
-                    .join("&");
-                format!("{}?{}", url, query)
-            }
-            None => url,
-        }
-    }
     pub(crate) fn deal_body_params(&self, request_builder: RequestBuilder) -> RequestBuilder {
-        match &self.body_params {
+        match &self.bodies {
             Some(body_params) => {
                 let body = body_params
                     .iter()
@@ -271,53 +188,71 @@ impl Action {
         }
     }
 
-    pub(crate) async fn fetch(&self) -> Result<(), String> {
+    pub(crate) async fn fetch(&self, url: &String) -> Result<String, String> {
         let client = Client::new();
         let mut request_builder = match self.method.as_str() {
-            "GET" => Ok(client.get(self.url())),
-            "POST" => Ok(client.get(self.url())),
+            "GET" => Ok(client.get(url)),
+            "POST" => Ok(client.post(url)),
             _ => Err(format!("不支持的请求方法:{}", &self.method)),
         }?;
         request_builder = self.deal_headers(request_builder);
         request_builder = self.deal_body_params(request_builder);
         match request_builder.send().await {
-            Ok(response) => {
-                println!("{:?}", response);
-                Ok(())
-            }
-            Err(err) => Err(format!("{:?}", err)),
+            Ok(response) => response
+                .text()
+                .await
+                .map_err(|err| format!("解析响应文本失败：{:?}", err)),
+            Err(err) => Err(format!("请求失败：{:?}", err)),
         }
     }
+    pub(crate) async fn extract(&self) -> Result<Vec<Value>, String> {
+        let mut fields = Vec::<Value>::new();
+        for url in &self.urls {
+            let text = self.fetch(url).await?;
+            let document = Html::parse_document(&text);
+            let value = self.mapper.deal_css(document)?;
+            fields.push(value);
+        }
+        Ok(fields)
+    }
 }
-#[derive(Debug, Getters)]
+#[derive(Debug, Deserialize, Getters)]
 #[getset(get = "pub(crate)")]
 pub(crate) struct Spider {
-    field: String,
+    key: String,
+    name: String,
     origins: Vec<String>,
-    addresses: Vec<String>,
+    addresses: Option<Vec<String>>,
     extractors: Vec<Extractor>,
-    actions: Vec<Action>,
 }
 impl Spider {
     pub(crate) fn new(
-        field: String,
+        key: String,
+        name: String,
         origins: Vec<String>,
-        addresses: Vec<String>,
+        addresses: Option<Vec<String>>,
         extractors: Vec<Extractor>,
-        actions: Vec<Action>,
     ) -> Self {
         Spider {
-            field,
+            key,
+            name,
             origins,
             addresses,
             extractors,
-            actions,
         }
     }
-    pub(crate) fn deal(&self) -> Result<(), String> {
-        for action in &self.actions {
-            println!("{:?}", action);
+    pub(crate) fn load(path: String) -> Result<Self, String> {
+        let serde_json =
+            std::fs::read_to_string(path).map_err(|err| format!("读取文件失败：{}", err))?;
+        serde_json::from_str::<Spider>(&serde_json).map_err(|err| format!("解析JSON失败：{}", err))
+    }
+    pub(crate) async fn deal(&self) -> Result<(), String> {
+        println!("**********************************************************************************************");
+        for extractor in &self.extractors {
+            let fields = extractor.extract().await?;
+            println!("{:?}", fields);
         }
+        println!("**********************************************************************************************");
         Ok(())
     }
 }

@@ -1,0 +1,175 @@
+{
+  "key": "sansiyule",
+  "name": "sansiyule",
+  "origins": [
+    "https://www.san404.com"
+  ],
+  "addresses": null,
+  "extractors": [
+    {
+      "key": "E000000000000001",
+      "name": "漫画列表",
+      "urls": [
+        "https://www.san404.com"
+      ],
+      "method": "GET",
+      "mapper": {
+        "key": "E000000000000001",
+        "name": "comics",
+        "field": "comics",
+        "expression": "section.container div.content-wrap div.content div.pb",
+        "mappings": [
+          {
+            "key": "E000000000000001",
+            "name": "title",
+            "field": "title",
+            "sequential": true,
+            "expression": "header p",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "url",
+            "field": "url",
+            "sequential": true,
+            "expression": "header h2 a",
+            "operation": "@href",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "info1",
+            "field": "info1",
+            "sequential": true,
+            "expression": "header h2 a",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "info2",
+            "field": "info2",
+            "sequential": true,
+            "expression": "header span",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "info3",
+            "field": "info3",
+            "sequential": true,
+            "expression": "header small",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "last_update",
+            "field": "last_update",
+            "sequential": true,
+            "expression": "p.text-muted.time",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "cover",
+            "field": "cover",
+            "sequential": true,
+            "expression": "p.focus a img",
+            "operation": "@src",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "note",
+            "field": "note",
+            "sequential": true,
+            "expression": "p.note",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "tags",
+            "field": "tags",
+            "sequential": true,
+            "expression": "span.post-tags",
+            "operation": "text",
+            "regexp": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "E000000000000001",
+      "name": "列表分页",
+      "urls": [
+        "https://www.san404.com"
+      ],
+      "method": "GET",
+      "mapper": {
+        "key": "E000000000000001",
+        "name": "comics",
+        "field": "comics",
+        "expression": "section.container div.content-wrap div.content div.pagination.pagination-multi ul li:last-child",
+        "mappings": [
+          {
+            "key": "E000000000000001",
+            "name": "num",
+            "field": "num",
+            "sequential": false,
+            "expression": "span",
+            "operation": "text",
+            "regexp": "(\\d+)"
+          }
+        ]
+      }
+    },
+    {
+      "key": "E000000000000001",
+      "name": "漫画信息",
+      "urls": [
+        "https://www.san404.com/100895481.html"
+      ],
+      "method": "GET",
+      "mapper": {
+        "key": "E000000000000001",
+        "name": "comic_info",
+        "field": "comic_info",
+        "expression": "section.container div.content-wrap div.content",
+        "mappings": [
+          {
+            "key": "E000000000000001",
+            "name": "cover",
+            "field": "cover",
+            "sequential": false,
+            "expression": "header.article-header div.c-img img",
+            "operation": "@src",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "desc",
+            "field": "desc",
+            "sequential": false,
+            "expression": "header.article-header span.dis",
+            "operation": "text",
+            "regexp": null
+          },
+          {
+            "key": "E000000000000001",
+            "name": "imgs",
+            "field": "imgs",
+            "sequential": true,
+            "expression": ":root",
+            "operation": "@srcset",
+            "regexp": null
+          }
+        ]
+      }
+    }
+  ]
+}
