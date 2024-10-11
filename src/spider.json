@@ -1,175 +1,336 @@
 {
-  "key": "sansiyule",
-  "name": "sansiyule",
+  "key": "yys",
+  "name": "yys",
   "origins": [
-    "https://www.san404.com"
+    "https://yys.163.com"
   ],
   "addresses": null,
   "extractors": [
     {
-      "key": "E000000000000001",
-      "name": "漫画列表",
+      "key": "",
+      "name": "角色列表",
       "urls": [
-        "https://www.san404.com"
+        "https://yys.163.com/shishen/index.html"
       ],
       "method": "GET",
-      "mapper": {
-        "key": "E000000000000001",
-        "name": "comics",
-        "field": "comics",
-        "expression": "section.container div.content-wrap div.content div.pb",
-        "mappings": [
-          {
-            "key": "E000000000000001",
-            "name": "title",
-            "field": "title",
-            "sequential": true,
-            "expression": "header p",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "url",
-            "field": "url",
-            "sequential": true,
-            "expression": "header h2 a",
-            "operation": "@href",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "info1",
-            "field": "info1",
-            "sequential": true,
-            "expression": "header h2 a",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "info2",
-            "field": "info2",
-            "sequential": true,
-            "expression": "header span",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "info3",
-            "field": "info3",
-            "sequential": true,
-            "expression": "header small",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "last_update",
-            "field": "last_update",
-            "sequential": true,
-            "expression": "p.text-muted.time",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "cover",
-            "field": "cover",
-            "sequential": true,
-            "expression": "p.focus a img",
-            "operation": "@src",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "note",
-            "field": "note",
-            "sequential": true,
-            "expression": "p.note",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "tags",
-            "field": "tags",
-            "sequential": true,
-            "expression": "span.post-tags",
-            "operation": "text",
-            "regexp": null
-          }
-        ]
-      }
+      "mappers": [
+        {
+          "key": "",
+          "name": "角色列表",
+          "field": "roles",
+          "sequential": true,
+          "expression": "#main > div.container > div.right_container > div.shishen_container > div > div.shishen_item",
+          "mappings": [
+            {
+              "key": "",
+              "name": "详情页面路径",
+              "field": "path",
+              "sequential": false,
+              "expression": "a",
+              "operation": "@href",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "头像",
+              "field": "avatar",
+              "sequential": false,
+              "expression": "span.pic_wrap img",
+              "operation": "@src",
+              "regexp": null
+            },
+            {
+              "key": "名称",
+              "name": "name",
+              "field": "name",
+              "sequential": false,
+              "expression": "span.name",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        }
+      ]
     },
     {
-      "key": "E000000000000001",
-      "name": "列表分页",
+      "key": "E000000000000002",
+      "name": "角色信息",
       "urls": [
-        "https://www.san404.com"
+        "https://yys.163.com/shishen/389.html"
       ],
       "method": "GET",
-      "mapper": {
-        "key": "E000000000000001",
-        "name": "comics",
-        "field": "comics",
-        "expression": "section.container div.content-wrap div.content div.pagination.pagination-multi ul li:last-child",
-        "mappings": [
-          {
-            "key": "E000000000000001",
-            "name": "num",
-            "field": "num",
-            "sequential": false,
-            "expression": "span",
-            "operation": "text",
-            "regexp": "(\\d+)"
-          }
-        ]
-      }
-    },
-    {
-      "key": "E000000000000001",
-      "name": "漫画信息",
-      "urls": [
-        "https://www.san404.com/100895481.html"
-      ],
-      "method": "GET",
-      "mapper": {
-        "key": "E000000000000001",
-        "name": "comic_info",
-        "field": "comic_info",
-        "expression": "section.container div.content-wrap div.content",
-        "mappings": [
-          {
-            "key": "E000000000000001",
-            "name": "cover",
-            "field": "cover",
-            "sequential": false,
-            "expression": "header.article-header div.c-img img",
-            "operation": "@src",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "desc",
-            "field": "desc",
-            "sequential": false,
-            "expression": "header.article-header span.dis",
-            "operation": "text",
-            "regexp": null
-          },
-          {
-            "key": "E000000000000001",
-            "name": "imgs",
-            "field": "imgs",
-            "sequential": true,
-            "expression": ":root",
-            "operation": "@srcset",
-            "regexp": null
-          }
-        ]
-      }
+      "mappers": [
+        {
+          "key": "",
+          "name": "背景信息",
+          "field": "info",
+          "sequential": false,
+          "expression": "#main_banner > div.person_part > div.person_name",
+          "mappings": [
+            {
+              "key": "",
+              "name": "名称",
+              "field": "name",
+              "sequential": false,
+              "expression": "span.name_txt",
+              "operation": "text",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "类型",
+              "field": "type",
+              "sequential": false,
+              "expression": "span:last-of-type",
+              "operation": "@class",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "背景信息",
+          "field": "info",
+          "sequential": false,
+          "expression": "#main_banner > div.person_part > div.person_pic > div.person_pic-container:first-of-type",
+          "mappings": [
+            {
+              "key": "",
+              "name": "原始海报",
+              "field": "cover.origin",
+              "sequential": false,
+              "expression": "div:nth-child(1) img",
+              "operation": "@src",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "觉醒海报",
+              "field": "cover.awake",
+              "sequential": false,
+              "expression": "div:nth-child(2) img",
+              "operation": "@src",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "背景信息",
+          "field": "info",
+          "sequential": false,
+          "expression": "#section1 > div > div",
+          "mappings": [
+            {
+              "key": "",
+              "name": "配音",
+              "field": "cv",
+              "sequential": false,
+              "expression": "div.btns > a > span.name",
+              "operation": "text",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "传记",
+              "field": "message",
+              "sequential": true,
+              "expression": "div.zhuanji_txt > div > div > p.chinese > span",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "背景信息",
+          "field": "info",
+          "sequential": false,
+          "expression": "#section2 > div > div div.data_title",
+          "mappings": [
+            {
+              "key": "",
+              "name": "原始头像",
+              "field": "avatar.origin",
+              "sequential": false,
+              "expression": "div.before_title.title > div > img",
+              "operation": "@src",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "觉醒头像",
+              "field": "avatar.awake",
+              "sequential": false,
+              "expression": "div.after_title.title > div > img",
+              "operation": "@src",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "属性信息",
+          "field": "figure",
+          "sequential": false,
+          "expression": "#section2 > div > div ul > li:nth-child(1)",
+          "mappings": [
+            {
+              "key": "",
+              "name": "属性字段标识",
+              "field": "keys",
+              "sequential": true,
+              "expression": "div.data_name > em",
+              "operation": "@class",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "属性字段文本",
+              "field": "labels",
+              "sequential": true,
+              "expression": "div.data_name > span",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "属性信息",
+          "field": "figure",
+          "sequential": false,
+          "expression": "#section2 > div > div ul > li:nth-child(2)",
+          "mappings": [
+            {
+              "key": "",
+              "name": "初始属性等级列表",
+              "field": "origin.levels",
+              "sequential": true,
+              "expression": "div.init_state > span:nth-child(1)",
+              "operation": "@class",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "初始属性值列表",
+              "field": "origin.values",
+              "sequential": true,
+              "expression": "div.init_state > span:nth-child(2)",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "属性信息",
+          "field": "figure",
+          "sequential": false,
+          "expression": "#section2 > div > div ul > li:nth-child(3)",
+          "mappings": [
+            {
+              "key": "",
+              "name": "觉醒属性等级列表",
+              "field": "awake.levels",
+              "sequential": true,
+              "expression": "div.wakeup_state > span:nth-child(1)",
+              "operation": "@class",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "觉醒属性值列表",
+              "field": "awake.values",
+              "sequential": true,
+              "expression": "div.wakeup_state > span:nth-child(2)",
+              "operation": "text",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "觉醒属性值增加值列表",
+              "field": "awake.added",
+              "sequential": true,
+              "expression": "div.wakeup_state > span:nth-child(3)",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "技能信息",
+          "field": "skill.origin",
+          "sequential": true,
+          "expression": "#section2 > div > div > div.skill_bar > div.skills > ul > li",
+          "mappings": [
+            {
+              "key": "",
+              "name": "图标",
+              "field": "avatar",
+              "sequential": false,
+              "expression": "a img",
+              "operation": "@src",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "名称",
+              "field": "name",
+              "sequential": false,
+              "expression": "p.skill_name",
+              "operation": "text",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "详细描述",
+              "field": "desc",
+              "sequential": true,
+              "expression": "div.skill_info p",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        },
+        {
+          "key": "",
+          "name": "技能信息",
+          "field": "skill.awake",
+          "sequential": true,
+          "expression": "#section2 > div > div > div.skill_bar > div.wakeup_skills > ul > li:nth-child(2n)",
+          "mappings": [
+            {
+              "key": "",
+              "name": "图标",
+              "field": "avatar",
+              "sequential": false,
+              "expression": "a img",
+              "operation": "@src",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "名称",
+              "field": "name",
+              "sequential": false,
+              "expression": "p.skill_name",
+              "operation": "text",
+              "regexp": null
+            },
+            {
+              "key": "",
+              "name": "详细描述",
+              "field": "name",
+              "sequential": true,
+              "expression": "div.skill_info p",
+              "operation": "text",
+              "regexp": null
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -1,4 +1,5 @@
 use getset::Getters;
+use headless_chrome::Browser;
 use reqwest::header::{HeaderMap, HeaderName};
 use reqwest::{Client, RequestBuilder};
 use scraper::{ElementRef, Html, Selector};
@@ -48,7 +49,7 @@ impl Mapping {
             None => {}
         }
     }
-    fn deal_operation(&self, element: &ElementRef) -> Result<String, String> {
+    fn handler_operation(&self, element: &ElementRef) -> Result<String, String> {
         match self.operation.as_str() {
             "text" => {
                 let text = element.text().collect::<String>();
@@ -63,26 +64,26 @@ impl Mapping {
             }
         }
     }
-    pub(crate) fn deal_css(&self, element: ElementRef) -> Result<(String, String), String> {
+    pub(crate) fn mapping(&self, element: &ElementRef) -> Result<Value, String> {
         let selector = Selector::parse(&self.expression)
             .map_err(|err| format!("解析CSS表达式失败：{}", err))?;
         match self.sequential {
             true => {
                 let text_refs = element.select(&selector).collect::<Vec<_>>();
-                let mut text_items = Vec::<String>::new();
+                let mut text_items = Vec::<Value>::new();
                 for text_ref in text_refs {
-                    let text = self.deal_operation(&text_ref)?;
-                    text_items.push(text);
+                    let text = self.handler_operation(&text_ref)?;
+                    text_items.push(Value::String(text));
                 }
-                Ok((self.field.clone(), text_items.join(",")))
+                Ok(Value::Array(text_items))
             }
             false => {
                 let text_ref = element
                     .select(&selector)
                     .next()
                     .ok_or(format!("获取元素失败：{}", self.expression))?;
-                let text = self.deal_operation(&text_ref)?;
-                Ok((self.field.clone(), text))
+                let text = self.handler_operation(&text_ref)?;
+                Ok(Value::String(text))
             }
         }
     }
@@ -93,6 +94,7 @@ pub(crate) struct Mapper {
     key: String,
     name: String,
     field: String,
+    sequential: bool,
     expression: String,
     mappings: Option<Vec<Mapping>>,
 }
@@ -101,6 +103,7 @@ impl Mapper {
         key: String,
         name: String,
         field: String,
+        sequential: bool,
         expression: String,
         mappings: Option<Vec<Mapping>>,
     ) -> Self {
@@ -108,25 +111,45 @@ impl Mapper {
             key,
             name,
             field,
+            sequential,
             expression,
             mappings,
         }
     }
-    pub(crate) fn deal_css(&self, element: Html) -> Result<Value, String> {
+    pub(crate) fn map(&self, element: &Html) -> Result<Map<String, Value>, String> {
         let selector = Selector::parse(&self.expression)
             .map_err(|err| format!("解析CSS表达式失败：{}", err))?;
-        let fragment = element
-            .select(&selector)
-            .next()
-            .ok_or(format!("获取元素失败：{}", self.expression))?;
-        let mut fields = Map::<String, Value>::new();
-        if let Some(mappings) = &self.mappings {
-            for mapping in mappings {
-                let (field, value) = mapping.deal_css(fragment)?;
-                fields.insert(field, Value::String(value));
+        let mut values = Map::<String, Value>::new();
+        match self.sequential {
+            true => {
+                let element_refs = element.select(&selector).collect::<Vec<_>>();
+                let mut items = Vec::<Value>::new();
+                for element_ref in element_refs {
+                    let mut fields = Map::<String, Value>::new();
+                    if let Some(mappings) = &self.mappings {
+                        for mapping in mappings {
+                            let value = mapping.mapping(&element_ref)?;
+                            fields.insert(mapping.field.clone(), value);
+                        }
+                        items.push(Value::Object(fields));
+                    }
+                }
+                values.insert(self.field.clone(), Value::Array(items));
+            }
+            false => {
+                let element_ref = element
+                    .select(&selector)
+                    .next()
+                    .ok_or(format!("获取元素失败：{}", self.expression))?;
+                if let Some(mappings) = &self.mappings {
+                    for mapping in mappings {
+                        let value = mapping.mapping(&element_ref)?;
+                        values.insert(format!("{}.{}", &self.field, &mapping.field), value);
+                    }
+                }
             }
         }
-        Ok(Value::Object(fields))
+        Ok(values)
     }
 }
 #[derive(Debug, Deserialize, Getters)]
@@ -135,7 +158,7 @@ pub(crate) struct Extractor {
     key: String,
     name: String,
     urls: Vec<String>,
-    mapper: Mapper,
+    mappers: Vec<Mapper>,
     headers: Option<HashMap<String, String>>,
     bodies: Option<HashMap<String, String>>,
     method: String,
@@ -145,7 +168,7 @@ impl Extractor {
         key: String,
         name: String,
         urls: Vec<String>,
-        mapper: Mapper,
+        mappers: Vec<Mapper>,
         headers: Option<HashMap<String, String>>,
         bodies: Option<HashMap<String, String>>,
         method: String,
@@ -154,7 +177,7 @@ impl Extractor {
             key,
             name,
             urls,
-            mapper,
+            mappers,
             headers,
             bodies,
             method,
@@ -180,9 +203,7 @@ impl Extractor {
                     .map(|(key, value)| format!("{}={}", key, value))
                     .collect::<Vec<String>>()
                     .join("&");
-                request_builder
-                    .body(body)
-                    .header("Content-Type", "application/x-www-form-urlencoded")
+                request_builder.body(body)
             }
             None => request_builder,
         }
@@ -208,10 +229,32 @@ impl Extractor {
     pub(crate) async fn extract(&self) -> Result<Vec<Value>, String> {
         let mut fields = Vec::<Value>::new();
         for url in &self.urls {
-            let text = self.fetch(url).await?;
+            // let text = self.fetch(url).await?;
+            let mut option_builder = headless_chrome::LaunchOptionsBuilder::default();
+            let browser = Browser::new(option_builder.headless(true).build().unwrap()).unwrap();
+
+            let tab = browser.new_tab().unwrap();
+
+            tab.navigate_to(url).unwrap();
+            tab.wait_until_navigated().unwrap();
+            let text = tab.get_content().unwrap();
+            std::fs::write(
+                format!(
+                    "src/{}.html",
+                    url.replace("/", "").replace(":", "").replace(".", "")
+                ),
+                &text,
+            )
+            .unwrap();
             let document = Html::parse_document(&text);
-            let value = self.mapper.deal_css(document)?;
-            fields.push(value);
+            let mut new_value = Map::<String, Value>::new();
+            for mapper in &self.mappers {
+                let value = mapper.map(&document)?;
+                for (k, v) in value.iter().collect::<Vec<_>>() {
+                    new_value.insert(k.to_string(), v.clone());
+                }
+            }
+            fields.push(Value::Object(new_value));
         }
         Ok(fields)
     }
@@ -250,7 +293,11 @@ impl Spider {
         println!("**********************************************************************************************");
         for extractor in &self.extractors {
             let fields = extractor.extract().await?;
-            println!("{:?}", fields);
+            std::fs::write(
+                format!("src/{}.json", extractor.name),
+                serde_json::to_string(&Value::Array(fields)).unwrap(),
+            )
+            .expect("err");
         }
         println!("**********************************************************************************************");
         Ok(())
