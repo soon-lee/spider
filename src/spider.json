@@ -5,7 +5,7 @@
     "https://yys.163.com"
   ],
   "addresses": null,
-  "extractors": [
+  "crawlers": [
     {
       "key": "",
       "name": "角色列表",
@@ -18,17 +18,16 @@
           "key": "",
           "name": "角色列表",
           "field": "roles",
-          "sequential": true,
           "expression": "#main > div.container > div.right_container > div.shishen_container > div > div.shishen_item",
-          "mappings": [
+          "sequential": true,
+          "extractors": [
             {
               "key": "",
               "name": "详情页面路径",
               "field": "path",
               "sequential": false,
               "expression": "a",
-              "operation": "@href",
-              "regexp": null
+              "operation": "@href"
             },
             {
               "key": "",
@@ -36,8 +35,7 @@
               "field": "avatar",
               "sequential": false,
               "expression": "span.pic_wrap img",
-              "operation": "@src",
-              "regexp": null
+              "operation": "@src"
             },
             {
               "key": "名称",
@@ -45,8 +43,7 @@
               "field": "name",
               "sequential": false,
               "expression": "span.name",
-              "operation": "text",
-              "regexp": null
+              "operation": "text"
             }
           ]
         }
@@ -65,106 +62,92 @@
           "name": "背景信息",
           "field": "info",
           "sequential": false,
-          "expression": "#main_banner > div.person_part > div.person_name",
-          "mappings": [
+          "expression": "body",
+          "extractors": [
             {
               "key": "",
               "name": "名称",
               "field": "name",
               "sequential": false,
-              "expression": "span.name_txt",
-              "operation": "text",
-              "regexp": null
+              "expression": "#main_banner > div.person_part div.person_name span.name_txt",
+              "operation": "text"
             },
             {
               "key": "",
               "name": "类型",
               "field": "type",
               "sequential": false,
-              "expression": "span:last-of-type",
+              "expression": "#main_banner > div.person_part div.person_name span:last-of-type",
               "operation": "@class",
-              "regexp": null
-            }
-          ]
-        },
-        {
-          "key": "",
-          "name": "背景信息",
-          "field": "info",
-          "sequential": false,
-          "expression": "#main_banner > div.person_part > div.person_pic > div.person_pic-container:first-of-type",
-          "mappings": [
-            {
-              "key": "",
-              "name": "原始海报",
-              "field": "cover.origin",
-              "sequential": false,
-              "expression": "div:nth-child(1) img",
-              "operation": "@src",
-              "regexp": null
+              "regexp": "([NPRS]+)"
             },
-            {
-              "key": "",
-              "name": "觉醒海报",
-              "field": "cover.awake",
-              "sequential": false,
-              "expression": "div:nth-child(2) img",
-              "operation": "@src",
-              "regexp": null
-            }
-          ]
-        },
-        {
-          "key": "",
-          "name": "背景信息",
-          "field": "info",
-          "sequential": false,
-          "expression": "#section1 > div > div",
-          "mappings": [
             {
               "key": "",
               "name": "配音",
               "field": "cv",
               "sequential": false,
-              "expression": "div.btns > a > span.name",
-              "operation": "text",
-              "regexp": null
+              "expression": "#section1 > div > div div.btns > a > span.name",
+              "operation": "text"
             },
             {
               "key": "",
               "name": "传记",
               "field": "message",
               "sequential": true,
-              "expression": "div.zhuanji_txt > div > div > p.chinese > span",
-              "operation": "text",
-              "regexp": null
+              "expression": "#section1 > div > div div.zhuanji_txt > div > div > p.chinese > span",
+              "operation": "text"
             }
-          ]
-        },
-        {
-          "key": "",
-          "name": "背景信息",
-          "field": "info",
-          "sequential": false,
-          "expression": "#section2 > div > div div.data_title",
-          "mappings": [
+          ],
+          "children": [
             {
               "key": "",
-              "name": "原始头像",
-              "field": "avatar.origin",
+              "name": "海报",
+              "field": "cover",
               "sequential": false,
-              "expression": "div.before_title.title > div > img",
-              "operation": "@src",
-              "regexp": null
+              "expression": "#main_banner > div.person_part div.person_pic > div.person_pic-container:first-of-type",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "原始海报",
+                  "field": "origin",
+                  "sequential": false,
+                  "expression": "div:nth-child(1) img",
+                  "operation": "@src"
+                },
+                {
+                  "key": "",
+                  "name": "觉醒海报",
+                  "field": "awake",
+                  "sequential": false,
+                  "expression": "div:nth-child(2) img",
+                  "operation": "@src"
+                }
+              ]
             },
             {
               "key": "",
-              "name": "觉醒头像",
-              "field": "avatar.awake",
+              "name": "头像",
+              "field": "avatar",
               "sequential": false,
-              "expression": "div.after_title.title > div > img",
-              "operation": "@src",
-              "regexp": null
+              "expression": "#section2 > div > div div.data_title",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "原始头像",
+                  "field": "origin",
+                  "sequential": false,
+                  "expression": "div.before_title.title > div > img",
+                  "operation": "@src"
+                },
+                {
+                  "key": "",
+                  "name": "觉醒头像",
+                  "field": "awake",
+                  "sequential": false,
+                  "expression": "div.after_title.title > div > img",
+                  "operation": "@src"
+                }
+              ]
             }
           ]
         },
@@ -173,160 +156,165 @@
           "name": "属性信息",
           "field": "figure",
           "sequential": false,
-          "expression": "#section2 > div > div ul > li:nth-child(1)",
-          "mappings": [
+          "expression": "#section2 > div > div > ul.data_list",
+          "children": [
             {
               "key": "",
-              "name": "属性字段标识",
-              "field": "keys",
+              "name": "属性字段",
+              "field": "fields",
               "sequential": true,
-              "expression": "div.data_name > em",
-              "operation": "@class",
-              "regexp": null
+              "expression": "li:nth-child(1) div.data_name",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "属性字段标识",
+                  "field": "key",
+                  "sequential": false,
+                  "expression": "em",
+                  "operation": "@class"
+                },
+                {
+                  "key": "",
+                  "name": "属性字段文本",
+                  "field": "label",
+                  "sequential": false,
+                  "expression": "span",
+                  "operation": "text"
+                }
+              ]
             },
             {
               "key": "",
-              "name": "属性字段文本",
-              "field": "labels",
-              "sequential": true,
-              "expression": "div.data_name > span",
-              "operation": "text",
-              "regexp": null
-            }
-          ]
-        },
-        {
-          "key": "",
-          "name": "属性信息",
-          "field": "figure",
-          "sequential": false,
-          "expression": "#section2 > div > div ul > li:nth-child(2)",
-          "mappings": [
-            {
-              "key": "",
-              "name": "初始属性等级列表",
-              "field": "origin.levels",
-              "sequential": true,
-              "expression": "div.init_state > span:nth-child(1)",
-              "operation": "@class",
-              "regexp": null
+              "name": "初始属性列表",
+              "field": "origin",
+              "sequential": false,
+              "expression": "li:nth-child(2) div.init_state",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "初始属性等级列表",
+                  "field": "levels",
+                  "sequential": true,
+                  "expression": "span:nth-child(1)",
+                  "operation": "@class"
+                },
+                {
+                  "key": "",
+                  "name": "初始属性值列表",
+                  "field": "values",
+                  "sequential": true,
+                  "expression": "span:nth-child(2)",
+                  "operation": "text"
+                }
+              ]
             },
             {
               "key": "",
-              "name": "初始属性值列表",
-              "field": "origin.values",
-              "sequential": true,
-              "expression": "div.init_state > span:nth-child(2)",
-              "operation": "text",
-              "regexp": null
-            }
-          ]
-        },
-        {
-          "key": "",
-          "name": "属性信息",
-          "field": "figure",
-          "sequential": false,
-          "expression": "#section2 > div > div ul > li:nth-child(3)",
-          "mappings": [
-            {
-              "key": "",
-              "name": "觉醒属性等级列表",
-              "field": "awake.levels",
-              "sequential": true,
-              "expression": "div.wakeup_state > span:nth-child(1)",
-              "operation": "@class",
-              "regexp": null
-            },
-            {
-              "key": "",
-              "name": "觉醒属性值列表",
-              "field": "awake.values",
-              "sequential": true,
-              "expression": "div.wakeup_state > span:nth-child(2)",
-              "operation": "text",
-              "regexp": null
-            },
-            {
-              "key": "",
-              "name": "觉醒属性值增加值列表",
-              "field": "awake.added",
-              "sequential": true,
-              "expression": "div.wakeup_state > span:nth-child(3)",
-              "operation": "text",
-              "regexp": null
+              "name": "觉醒属性列表",
+              "field": "awake",
+              "sequential": false,
+              "expression": "li:nth-child(3) div.wakeup_state",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "觉醒属性等级列表",
+                  "field": "levels",
+                  "sequential": true,
+                  "expression": "span:nth-child(1)",
+                  "operation": "@class"
+                },
+                {
+                  "key": "",
+                  "name": "觉醒属性值列表",
+                  "field": "values",
+                  "sequential": true,
+                  "expression": "span:nth-child(2)",
+                  "operation": "text"
+                },
+                {
+                  "key": "",
+                  "name": "觉醒属性值增加值列表",
+                  "field": "added",
+                  "sequential": true,
+                  "expression": "span:nth-child(3)",
+                  "operation": "text"
+                }
+              ]
             }
           ]
         },
         {
           "key": "",
           "name": "技能信息",
-          "field": "skill.origin",
-          "sequential": true,
-          "expression": "#section2 > div > div > div.skill_bar > div.skills > ul > li",
-          "mappings": [
+          "field": "skill",
+          "sequential": false,
+          "expression": "#section2 > div > div > div.skill_bar",
+          "children": [
             {
               "key": "",
-              "name": "图标",
-              "field": "avatar",
-              "sequential": false,
-              "expression": "a img",
-              "operation": "@src",
-              "regexp": null
-            },
-            {
-              "key": "",
-              "name": "名称",
-              "field": "name",
-              "sequential": false,
-              "expression": "p.skill_name",
-              "operation": "text",
-              "regexp": null
-            },
-            {
-              "key": "",
-              "name": "详细描述",
-              "field": "desc",
+              "name": "初始技能信息",
+              "field": "origin",
               "sequential": true,
-              "expression": "div.skill_info p",
-              "operation": "text",
-              "regexp": null
-            }
-          ]
-        },
-        {
-          "key": "",
-          "name": "技能信息",
-          "field": "skill.awake",
-          "sequential": true,
-          "expression": "#section2 > div > div > div.skill_bar > div.wakeup_skills > ul > li:nth-child(2n)",
-          "mappings": [
-            {
-              "key": "",
-              "name": "图标",
-              "field": "avatar",
-              "sequential": false,
-              "expression": "a img",
-              "operation": "@src",
-              "regexp": null
+              "expression": "div.skills > ul > li",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "图标",
+                  "field": "avatar",
+                  "sequential": false,
+                  "expression": "li a img",
+                  "operation": "@src"
+                },
+                {
+                  "key": "",
+                  "name": "名称",
+                  "field": "name",
+                  "sequential": false,
+                  "expression": "p.skill_name",
+                  "operation": "text"
+                },
+                {
+                  "key": "",
+                  "name": "详细描述",
+                  "field": "desc",
+                  "sequential": true,
+                  "expression": "div.skill_info p",
+                  "operation": "text"
+                }
+              ]
             },
             {
               "key": "",
-              "name": "名称",
-              "field": "name",
-              "sequential": false,
-              "expression": "p.skill_name",
-              "operation": "text",
-              "regexp": null
-            },
-            {
-              "key": "",
-              "name": "详细描述",
-              "field": "name",
+              "name": "觉醒技能信息",
+              "field": "awake",
               "sequential": true,
-              "expression": "div.skill_info p",
-              "operation": "text",
-              "regexp": null
+              "expression": "div.wakeup_skills > ul > li:nth-child(2n)",
+              "extractors": [
+                {
+                  "key": "",
+                  "name": "图标",
+                  "field": "avatar",
+                  "sequential": false,
+                  "expression": "a img",
+                  "operation": "@src"
+                },
+                {
+                  "key": "",
+                  "name": "名称",
+                  "field": "name",
+                  "sequential": false,
+                  "expression": "p.skill_name",
+                  "operation": "text"
+                },
+                {
+                  "key": "",
+                  "name": "详细描述",
+                  "field": "name",
+                  "sequential": true,
+                  "expression": "div.skill_info p",
+                  "operation": "text"
+                }
+              ]
             }
           ]
         }
