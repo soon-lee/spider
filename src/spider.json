@@ -20,6 +20,11 @@
           "field": "roles",
           "expression": "#main > div.container > div.right_container > div.shishen_container > div > div.shishen_item",
           "sequential": true,
+          "transformer": {
+            "key": "",
+            "name": "",
+            "expression": "[roles].path"
+          },
           "extractors": [
             {
               "key": "",
@@ -50,7 +55,7 @@
       ]
     },
     {
-      "key": "E000000000000002",
+      "key": "",
       "name": "角色信息",
       "urls": [
         "https://yys.163.com/shishen/389.html"
@@ -187,24 +192,26 @@
               "key": "",
               "name": "初始属性列表",
               "field": "origin",
-              "sequential": false,
+              "sequential": true,
               "expression": "li:nth-child(2) div.init_state",
               "extractors": [
                 {
                   "key": "",
                   "name": "初始属性等级列表",
-                  "field": "levels",
-                  "sequential": true,
+                  "field": "level",
+                  "sequential": false,
                   "expression": "span:nth-child(1)",
-                  "operation": "@class"
+                  "operation": "@class",
+                  "regexp": "level([0-9]+)"
                 },
                 {
                   "key": "",
                   "name": "初始属性值列表",
-                  "field": "values",
-                  "sequential": true,
+                  "field": "value",
+                  "sequential": false,
                   "expression": "span:nth-child(2)",
-                  "operation": "text"
+                  "operation": "text",
+                  "regexp": "([0-9%]+)"
                 }
               ]
             },
@@ -212,30 +219,32 @@
               "key": "",
               "name": "觉醒属性列表",
               "field": "awake",
-              "sequential": false,
+              "sequential": true,
               "expression": "li:nth-child(3) div.wakeup_state",
               "extractors": [
                 {
                   "key": "",
                   "name": "觉醒属性等级列表",
-                  "field": "levels",
-                  "sequential": true,
+                  "field": "level",
+                  "sequential": false,
                   "expression": "span:nth-child(1)",
-                  "operation": "@class"
+                  "operation": "@class",
+                  "regexp": "level([0-9]+)"
                 },
                 {
                   "key": "",
                   "name": "觉醒属性值列表",
-                  "field": "values",
-                  "sequential": true,
+                  "field": "value",
+                  "sequential": false,
                   "expression": "span:nth-child(2)",
-                  "operation": "text"
+                  "operation": "text",
+                  "regexp": "([0-9%]+)"
                 },
                 {
                   "key": "",
                   "name": "觉醒属性值增加值列表",
                   "field": "added",
-                  "sequential": true,
+                  "sequential": false,
                   "expression": "span:nth-child(3)",
                   "operation": "text"
                 }

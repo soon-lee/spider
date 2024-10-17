@@ -3,9 +3,9 @@ name = "spider"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+base64 = "0.22.1"
+chrono = "0.4.38"
 getset = { version = "0.1.2", features = [] }
 playwright = "0.0.20"
 regex = "1.10.5"
@@ -13,4 +13,5 @@ reqwest = { version = "0.12.5", features = [] }
 scraper = "0.19.0"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.120"
+sqlx = { version = "0.8.2", features = ["mysql", "postgres", "json", "chrono", "time", "runtime-tokio-rustls"] }
 tokio = { version = "1.38.0", features = ["rt", "rt-multi-thread", "macros"] }

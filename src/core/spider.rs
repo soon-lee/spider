@@ -1,10 +1,106 @@
+use getset::Getters;
 use playwright::api::Page;
 use playwright::Playwright;
 use scraper::{ElementRef, Html, Selector};
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+pub struct Transformer {
+    key: String,
+    name: String,
+    expression: String,
+    pattern: Option<String>,
+}
+impl Transformer {
+    pub fn new(key: String, name: String, expression: String, pattern: Option<String>) -> Self {
+        Transformer {
+            key,
+            name,
+            expression,
+            pattern,
+        }
+    }
+    fn parse(value: &Value, expression: &String) -> Result<Value, String> {
+        match expression.find(".") {
+            Some(index) => {
+                let field = expression[..index].to_string();
+                let sub_expression = expression[index + 1..].to_string();
+                match field.starts_with("[") && field.ends_with("]") {
+                    true => {
+                        let index = field[1..field.len() - 1].to_string();
+                        let item = value
+                            .get(index)
+                            .ok_or(format!("属性表达式错误：{}", expression))?;
+                        let arr = item
+                            .as_array()
+                            .ok_or(format!("属性表达式错误：{}", expression))?;
+                        let mut items = Vec::<Value>::new();
+                        for a in arr.iter() {
+                            let v = Self::parse(a, &sub_expression)?;
+                            items.push(v);
+                        }
+                        Ok(Value::Array(items))
+                    }
+                    false => {
+                        let item = value
+                            .get(&field)
+                            .ok_or(format!("属性表达式错误：{}", expression))?;
+                        Self::parse(item, &sub_expression)
+                    }
+                }
+            }
+            None => {
+                let item = value
+                    .get(&expression)
+                    .ok_or(format!("属性表达式错误：{}", expression))?;
+                Ok(item.clone())
+            }
+        }
+    }
+    pub fn transform(&self, value: &Value, origin: &String) -> Result<Vec<String>, String> {
+        let value = Self::parse(value, &self.expression)?;
+        match &self.pattern {
+            Some(pattern) => {
+                let count = value
+                    .as_i64()
+                    .ok_or(format!("不合适的属性表达式：{}", self.expression))?;
+                let mut urls = Vec::<String>::new();
+                for i in 0..count {
+                    urls.push(
+                        pattern
+                            .replace("{ORIGIN}", origin.as_str())
+                            .replace("{PATTERN}", (i + 1).to_string().as_str()),
+                    );
+                }
+                Ok(urls)
+            }
+            None => {
+                let items = value
+                    .as_array()
+                    .ok_or(format!("不合适的属性表达式：{}", self.expression))?;
+                let mut urls = Vec::<String>::new();
+                for item in items {
+                    let url = item
+                        .as_str()
+                        .ok_or(format!("不合适的属性表达式：{}", self.expression))?;
+                    let url = String::from(url);
+                    if url.starts_with(origin) {
+                        urls.push(url);
+                    } else if url.starts_with("//") {
+                        urls.push(format!("https{}", url))
+                    } else if url.starts_with("/") {
+                        urls.push(format!("{}{}", origin, url))
+                    } else {
+                        urls.push(format!("{}/{}", origin, url));
+                    }
+                }
+                Ok(urls)
+            }
+        }
+    }
+}
+#[derive(Deserialize, Debug)]
 pub struct Extractor {
     key: String,
     name: String,
@@ -51,11 +147,15 @@ impl Extractor {
         match &self.regexp {
             Some(regexp) => {
                 let regex = regex::Regex::new(regexp).unwrap();
-                let captures = regex.captures(&result).unwrap();
-                let item = captures
-                    .get(1)
-                    .ok_or(String::from("正则提取失败，请使用\"()\"包裹来提取。"))?;
-                Ok(String::from(item.as_str()))
+                match regex.captures(&result) {
+                    None => Ok(result),
+                    Some(captures) => {
+                        let item = captures
+                            .get(1)
+                            .ok_or(String::from("正则提取失败，请使用\"()\"包裹来提取。"))?;
+                        Ok(String::from(item.as_str()))
+                    }
+                }
             }
             None => Ok(result),
         }
@@ -84,13 +184,14 @@ impl Extractor {
         }
     }
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Mapper {
     key: String,
     name: String,
     field: String,
     expression: String,
     sequential: bool,
+    transformer: Option<Transformer>,
     extractors: Option<Vec<Extractor>>,
     children: Option<Vec<Mapper>>,
 }
@@ -101,6 +202,7 @@ impl Mapper {
         field: String,
         expression: String,
         sequential: bool,
+        transformer: Option<Transformer>,
         extractors: Option<Vec<Extractor>>,
         children: Option<Vec<Mapper>>,
     ) -> Self {
@@ -110,6 +212,7 @@ impl Mapper {
             field,
             expression,
             sequential,
+            transformer,
             extractors,
             children,
         }
@@ -152,39 +255,34 @@ impl Mapper {
             match self.sequential {
                 true => {
                     let element_refs = element.select(&selector).collect::<Vec<_>>();
-                    let mut values = Vec::<Value>::new();
-                    for element_ref in &element_refs {
-                        let mut inner = Map::<String, Value>::new();
-                        for child in children {
+                    for child in children {
+                        let mut values = Vec::<Value>::new();
+                        for element_ref in &element_refs {
                             let value = child.mapping(element_ref)?;
-                            for (k, v) in value.iter() {
-                                inner.insert(k.clone(), v.clone());
-                            }
+                            values.push(Value::Object(value));
                         }
-                        values.push(Value::Object(inner));
+                        obj.insert(child.field.clone(), Value::Array(values));
                     }
-                    obj.insert(self.field.clone(), Value::Array(values));
                 }
                 false => {
                     let element_ref = element
                         .select(&selector)
                         .next()
                         .ok_or(format!("获取元素失败：{}", self.expression))?;
-                    let mut inner = Map::<String, Value>::new();
                     for child in children {
                         let value = child.mapping(&element_ref)?;
                         for (k, v) in value.iter() {
-                            inner.insert(k.clone(), v.clone());
+                            obj.insert(k.clone(), v.clone());
                         }
                     }
-                    obj.insert(self.field.clone(), Value::Object(inner));
                 }
             }
         }
         Ok(obj)
     }
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Getters)]
+#[getset(get = "pub")]
 pub struct Crawler {
     key: String,
     name: String,
@@ -200,31 +298,42 @@ impl Crawler {
             urls,
         }
     }
-    pub async fn crawling(&self, page: &Page) -> Result<(), String> {
+    pub async fn crawling(&self, page: &Page, origin: &String) -> Result<Vec<Value>, String> {
+        let mut result = Vec::<Value>::new();
         for url in &self.urls {
             page.goto_builder(url)
                 .goto()
                 .await
                 .map_err(|err| format!("页面跳转失败{}", err))?;
-            page.wait_for_selector_builder("h1");
             let content = page
                 .content()
                 .await
                 .map_err(|err| format!("获取页面内容失败{}", err))?;
             let document = Html::parse_document(&content);
+            let mut obj = Map::<String, Value>::new();
             for mapper in &self.mappers {
                 let value = mapper.mapping(&document.root_element())?;
-                std::fs::write(
-                    format!("{}.json", mapper.name),
-                    &serde_json::to_string_pretty(&Value::Object(value)).unwrap(),
-                )
-                .unwrap()
+                for (k, v) in value.iter() {
+                    obj.insert(k.clone(), v.clone());
+                }
+                let result = Value::Object(value);
+                if let Some(transformer) = &mapper.transformer {
+                    let urls = transformer.transform(&result, origin)?;
+                    println!(
+                        "{:?}",
+                        urls.iter()
+                            .map(|x| x.replace("yys.163.com", "yys.163.com/shishen"))
+                            .collect::<Vec<_>>()
+                    );
+                }
             }
+            result.push(Value::Object(obj));
         }
-        Ok(())
+        Ok(result)
     }
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Getters)]
+#[getset(get = "pub")]
 pub struct Spider {
     key: String,
     name: String,
@@ -232,6 +341,7 @@ pub struct Spider {
     addresses: Option<Vec<String>>,
     crawlers: Vec<Crawler>,
 }
+
 impl Spider {
     pub fn new(
         key: String,
@@ -253,13 +363,39 @@ impl Spider {
             std::fs::read_to_string(path).map_err(|err| format!("读取文件失败：{}", err))?;
         serde_json::from_str::<Spider>(&serde_json).map_err(|err| format!("解析JSON失败：{}", err))
     }
+    pub async fn context() -> Result<std::sync::Arc<Page>, String> {
+        let playwright = Playwright::initialize()
+            .await
+            .map_err(|err| format!("Playwright初始化失败{}", err))?;
+        playwright
+            .install_chromium()
+            .map_err(|err| format!("Playwright安装Chrome失败{}", err))?;
+        let chromium = playwright.chromium();
+        let browser = chromium
+            .launcher()
+            .headless(true)
+            .launch()
+            .await
+            .map_err(|err| format!("浏览器启动失败{}", err))?;
+        let context = browser
+            .context_builder()
+            .build()
+            .await
+            .map_err(|err| format!("创建浏览器上下文失败{}", err))?;
+        let page = context
+            .new_page()
+            .await
+            .map_err(|err| format!("创建浏览器页面失败{}", err))?;
+        let page = std::sync::Arc::new(page);
+        Ok(page)
+    }
     pub async fn run(&self) -> Result<(), String> {
         let playwright = Playwright::initialize()
             .await
             .map_err(|err| format!("Playwright初始化失败{}", err))?;
         playwright
-            .prepare()
-            .map_err(|err| format!("Playwright配置失败{}", err))?; // Install browsers
+            .install_chromium()
+            .map_err(|err| format!("Playwright安装Chrome失败{}", err))?;
         let chromium = playwright.chromium();
         let browser = chromium
             .launcher()
@@ -277,7 +413,12 @@ impl Spider {
             .await
             .map_err(|err| format!("创建浏览器页面失败{}", err))?;
         for crawler in &self.crawlers {
-            crawler.crawling(&page).await?;
+            let value = crawler.crawling(&page, &self.origins[0]).await?;
+            std::fs::write(
+                format!("{}.json", crawler.name),
+                &serde_json::to_string_pretty(&Value::Array(value)).unwrap(),
+            )
+            .unwrap()
         }
         Ok(())
     }
